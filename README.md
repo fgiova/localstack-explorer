@@ -6,14 +6,14 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 
 ## Supported Services
 
-| Service        | Status            | Description                        |
-|----------------|-------------------|------------------------------------|
-| S3             | Fully implemented | Buckets, objects, upload/download  |
-| SQS            | Scaffold          | Queue management (coming soon)     |
-| SNS            | Scaffold          | Topic & subscription management    |
-| IAM            | Scaffold          | User, role, and policy management  |
-| CloudFront     | Scaffold          | Distribution management            |
-| CloudFormation | Scaffold          | Stack & template management        |
+| Service        | Status            | Description                                                       |
+|----------------|-------------------|-------------------------------------------------------------------|
+| S3             | Fully implemented | Buckets, objects, upload/download                                 |
+| SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
+| SNS            | Scaffold          | Topic & subscription management                                   |
+| IAM            | Scaffold          | User, role, and policy management                                 |
+| CloudFront     | Scaffold          | Distribution management                                           |
+| CloudFormation | Scaffold          | Stack & template management                                       |
 
 ## Quick Start
 
@@ -94,7 +94,7 @@ localstack-explorer/
 │   │       ├── aws/            # AWS SDK client factories
 │   │       ├── plugins/        # Auto-loaded plugins (one per service)
 │   │       │   ├── s3/         # Complete implementation
-│   │       │   ├── sqs/        # Scaffold
+│   │       │   ├── sqs/        # Complete implementation
 │   │       │   ├── sns/        # Scaffold
 │   │       │   ├── iam/        # Scaffold
 │   │       │   ├── cloudfront/ # Scaffold
@@ -133,6 +133,7 @@ localstack-explorer/
 ## Documentation
 
 - **[S3 Service Guide](docs/s3-service.md)** — Complete reference for S3 operations: buckets, objects, upload/download, and API endpoints.
+- **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.
 - **[Architecture](docs/architecture.md)** — System design, backend plugin pattern, frontend data flow, and project conventions.
 - **[Development Guide](docs/development.md)** — Local setup, testing, coding standards, and contribution workflow.

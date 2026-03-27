@@ -70,11 +70,15 @@ src/
     │   ├── schemas.ts    # TypeBox input/output schemas
     │   ├── service.ts    # Business logic (AWS SDK calls)
     │   └── routes.ts     # HTTP route definitions
-    ├── sqs/              # Scaffold (same structure)
-    ├── sns/
-    ├── iam/
-    ├── cloudfront/
-    └── cloudformation/
+    ├── sqs/              # Complete implementation (same structure as s3/)
+    │   ├── index.ts      # Plugin entry — creates SQS client and service
+    │   ├── schemas.ts    # TypeBox schemas for queues and messages
+    │   ├── service.ts    # SQSService — queue and message operations
+    │   └── routes.ts     # Queue CRUD, purge, attributes, send/receive/delete messages
+    ├── sns/              # Scaffold
+    ├── iam/              # Scaffold
+    ├── cloudfront/       # Scaffold
+    └── cloudformation/   # Scaffold
 ```
 
 > **Important:** Plugin entry points (`index.ts`) must export a plain async function — **not** wrapped with `fastify-plugin`. Autoload needs encapsulation enabled to apply directory-based route prefixes.
@@ -138,6 +142,8 @@ main.tsx
                      ├── index.tsx (Dashboard)
                      ├── s3/index.tsx (BucketList)
                      ├── s3/$bucketName.tsx (ObjectBrowser)
+                     ├── sqs/index.tsx (QueueList)
+                     ├── sqs/$queueName.tsx (QueueDetail)
                      └── ...service routes
 ```
 
@@ -208,6 +214,20 @@ A typical write operation (e.g., deleting a bucket):
 5. On success, React Query invalidates ["s3", "buckets"]
 6. Invalidation triggers a refetch of the bucket list
 7. UI updates automatically
+```
+
+A message send/receive cycle (e.g., SQS):
+
+```
+1. User navigates to /sqs/my-queue
+2. TanStack Router renders QueueDetail component
+3. QueueDetail calls useQueueAttributes() and useReceiveMessages() hooks
+4. React Query fires GET /api/sqs/my-queue/attributes and GET /api/sqs/my-queue/messages
+5. SQS plugin resolves the queue URL via GetQueueUrlCommand, then fetches data
+6. User fills the Send Message form and submits
+7. useSendMessage().mutate({ body, delaySeconds }) fires POST /api/sqs/my-queue/messages
+8. On success, React Query invalidates ["sqs", "messages", "my-queue"] and ["sqs", "attributes", "my-queue"]
+9. QueueDetail re-fetches messages and attributes automatically
 ```
 
 ## Testing Strategy

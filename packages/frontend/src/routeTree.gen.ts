@@ -14,8 +14,9 @@ import { Route as SqsIndexRouteImport } from './routes/sqs/index'
 import { Route as SnsIndexRouteImport } from './routes/sns/index'
 import { Route as S3IndexRouteImport } from './routes/s3/index'
 import { Route as IamIndexRouteImport } from './routes/iam/index'
-import { Route as CloudformationIndexRouteImport } from './routes/cloudformation/index'
 import { Route as CloudfrontIndexRouteImport } from './routes/cloudfront/index'
+import { Route as CloudformationIndexRouteImport } from './routes/cloudformation/index'
+import { Route as SqsQueueNameRouteImport } from './routes/sqs/$queueName'
 import { Route as S3BucketNameRouteImport } from './routes/s3/$bucketName'
 
 const IndexRoute = IndexRouteImport.update({
@@ -43,14 +44,19 @@ const IamIndexRoute = IamIndexRouteImport.update({
   path: '/iam/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CloudfrontIndexRoute = CloudfrontIndexRouteImport.update({
+  id: '/cloudfront/',
+  path: '/cloudfront/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CloudformationIndexRoute = CloudformationIndexRouteImport.update({
   id: '/cloudformation/',
   path: '/cloudformation/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CloudfrontIndexRoute = CloudfrontIndexRouteImport.update({
-  id: '/cloudfront/',
-  path: '/cloudfront/',
+const SqsQueueNameRoute = SqsQueueNameRouteImport.update({
+  id: '/sqs/$queueName',
+  path: '/sqs/$queueName',
   getParentRoute: () => rootRouteImport,
 } as any)
 const S3BucketNameRoute = S3BucketNameRouteImport.update({
@@ -62,6 +68,7 @@ const S3BucketNameRoute = S3BucketNameRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
+  '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation/': typeof CloudformationIndexRoute
   '/cloudfront/': typeof CloudfrontIndexRoute
   '/iam/': typeof IamIndexRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
+  '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation': typeof CloudformationIndexRoute
   '/cloudfront': typeof CloudfrontIndexRoute
   '/iam': typeof IamIndexRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
+  '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation/': typeof CloudformationIndexRoute
   '/cloudfront/': typeof CloudfrontIndexRoute
   '/iam/': typeof IamIndexRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/s3/$bucketName'
+    | '/sqs/$queueName'
     | '/cloudformation/'
     | '/cloudfront/'
     | '/iam/'
@@ -102,11 +112,21 @@ export interface FileRouteTypes {
     | '/sns/'
     | '/sqs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/s3/$bucketName' | '/cloudformation' | '/cloudfront' | '/iam' | '/s3' | '/sns' | '/sqs'
+  to:
+    | '/'
+    | '/s3/$bucketName'
+    | '/sqs/$queueName'
+    | '/cloudformation'
+    | '/cloudfront'
+    | '/iam'
+    | '/s3'
+    | '/sns'
+    | '/sqs'
   id:
     | '__root__'
     | '/'
     | '/s3/$bucketName'
+    | '/sqs/$queueName'
     | '/cloudformation/'
     | '/cloudfront/'
     | '/iam/'
@@ -118,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   S3BucketNameRoute: typeof S3BucketNameRoute
+  SqsQueueNameRoute: typeof SqsQueueNameRoute
   CloudformationIndexRoute: typeof CloudformationIndexRoute
   CloudfrontIndexRoute: typeof CloudfrontIndexRoute
   IamIndexRoute: typeof IamIndexRoute
@@ -163,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IamIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cloudfront/': {
+      id: '/cloudfront/'
+      path: '/cloudfront'
+      fullPath: '/cloudfront/'
+      preLoaderRoute: typeof CloudfrontIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cloudformation/': {
       id: '/cloudformation/'
       path: '/cloudformation'
@@ -170,11 +198,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CloudformationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cloudfront/': {
-      id: '/cloudfront/'
-      path: '/cloudfront'
-      fullPath: '/cloudfront/'
-      preLoaderRoute: typeof CloudfrontIndexRouteImport
+    '/sqs/$queueName': {
+      id: '/sqs/$queueName'
+      path: '/sqs/$queueName'
+      fullPath: '/sqs/$queueName'
+      preLoaderRoute: typeof SqsQueueNameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s3/$bucketName': {
@@ -190,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   S3BucketNameRoute: S3BucketNameRoute,
+  SqsQueueNameRoute: SqsQueueNameRoute,
   CloudformationIndexRoute: CloudformationIndexRoute,
   CloudfrontIndexRoute: CloudfrontIndexRoute,
   IamIndexRoute: IamIndexRoute,
