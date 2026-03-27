@@ -1,0 +1,35 @@
+{
+  "name": "@localstack-explorer/backend",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudformation": "^3.1018.0",
+    "@aws-sdk/client-cloudfront": "^3",
+    "@aws-sdk/client-iam": "^3",
+    "@aws-sdk/client-s3": "^3",
+    "@aws-sdk/client-sns": "^3",
+    "@aws-sdk/client-sqs": "^3",
+    "@aws-sdk/lib-storage": "^3",
+    "@aws-sdk/s3-request-presigner": "^3",
+    "@fastify/autoload": "^6.3.1",
+    "@fastify/cors": "^10",
+    "@fastify/multipart": "^9",
+    "env-schema": "^7.0.0",
+    "fastify": "^5",
+    "fastify-plugin": "^5",
+    "typebox": "^1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}
