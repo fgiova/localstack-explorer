@@ -1,13 +1,13 @@
 import { envSchema } from "env-schema";
 import Type, { type Static } from "typebox";
 
-const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudfront", "cloudformation"] as const;
+const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudfront", "cloudformation", "dynamodb"] as const;
 export type ServiceName = (typeof ALL_SERVICES)[number];
 
 const configSchema = Type.Object({
   PORT: Type.Number({ default: 3001 }),
   LOCALSTACK_ENDPOINT: Type.String({ default: "http://localhost:4566" }),
-  ENABLED_SERVICES: Type.String({ default: "s3,sqs,sns,iam,cloudformation" }),
+  ENABLED_SERVICES: Type.String({ default: "s3,sqs,sns,iam,cloudformation,dynamodb" }),
 });
 
 type ConfigSchema = Static<typeof configSchema>;

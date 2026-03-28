@@ -31,7 +31,7 @@ This document describes the system design and key architectural decisions in Loc
              ▼
 ┌─────────────────────────────┐
 │   LocalStack (:4566)        │
-│   S3·SQS·SNS·IAM·CF·CFN    │
+│  S3·SQS·SNS·IAM·CF·CFN·DDB │
 └─────────────────────────────┘
 ```
 
@@ -86,6 +86,11 @@ src/
     │   ├── schemas.ts    # TypeBox schemas for stacks, events, templates
     │   ├── service.ts    # CloudFormationService — stack CRUD, update, events, template
     │   └── routes.ts     # Stack CRUD, update, events, template retrieval
+    ├── dynamodb/         # Complete implementation
+    │   ├── index.ts      # Plugin entry — creates DynamoDB, Document, and Streams clients
+    │   ├── schemas.ts    # TypeBox schemas for tables, items, indexes, streams, PartiQL
+    │   ├── service.ts    # DynamoDBService — table, item, GSI, stream, and PartiQL operations
+    │   └── routes.ts     # Table CRUD, item CRUD, batch, GSI, PartiQL, streams
     ├── iam/              # Scaffold
     └── cloudfront/       # Scaffold
 ```

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HardDrive, MessageSquare, Bell, Shield, Globe, Layers, ChevronLeft } from "lucide-react";
+import { HardDrive, MessageSquare, Bell, Shield, Globe, Layers, Database, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const services = [
   { name: "IAM", key: "iam", path: "/iam", icon: Shield, description: "Identity & Access" },
   { name: "CloudFront", key: "cloudfront", path: "/cloudfront", icon: Globe, description: "CDN" },
   { name: "CloudFormation", key: "cloudformation", path: "/cloudformation", icon: Layers, description: "Infrastructure as Code" },
+  { name: "DynamoDB", key: "dynamodb", path: "/dynamodb", icon: Database, description: "NoSQL Database" },
 ];
 
 export function Sidebar() {

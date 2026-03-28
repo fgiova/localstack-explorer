@@ -4,6 +4,9 @@ import { SNSClient } from "@aws-sdk/client-sns";
 import { IAMClient } from "@aws-sdk/client-iam";
 import { CloudFrontClient } from "@aws-sdk/client-cloudfront";
 import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBStreamsClient } from "@aws-sdk/client-dynamodb-streams";
 import { config } from "../config.js";
 
 const commonConfig = {
@@ -40,4 +43,19 @@ export function createCloudFrontClient(): CloudFrontClient {
 
 export function createCloudFormationClient(): CloudFormationClient {
   return new CloudFormationClient(commonConfig);
+}
+
+export function createDynamoDBClient(): DynamoDBClient {
+  return new DynamoDBClient(commonConfig);
+}
+
+export function createDynamoDBDocumentClient(): DynamoDBDocumentClient {
+  const client = new DynamoDBClient(commonConfig);
+  return DynamoDBDocumentClient.from(client, {
+    marshallOptions: { removeUndefinedValues: true },
+  });
+}
+
+export function createDynamoDBStreamsClient(): DynamoDBStreamsClient {
+  return new DynamoDBStreamsClient(commonConfig);
 }
