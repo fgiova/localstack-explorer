@@ -14,6 +14,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | IAM            | Scaffold          | User, role, and policy management                                 |
 | CloudFront     | Scaffold          | Distribution management                                           |
 | CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
+| DynamoDB       | Fully implemented | Table management, create, list, detail views                      |
 
 ## Quick Start
 
@@ -37,7 +38,7 @@ pnpm install
 docker compose up -d
 ```
 
-This starts LocalStack with all required services (S3, SQS, SNS, IAM, CloudFront, CloudFormation) on `http://localhost:4566`.
+This starts LocalStack with all required services (S3, SQS, SNS, IAM, CloudFront, CloudFormation, DynamoDB) on `http://localhost:4566`.
 
 ### Development
 
@@ -65,6 +66,26 @@ The frontend dev server proxies `/api` requests to the backend automatically.
 pnpm build
 ```
 
+### Standalone Build (single server)
+
+Build backend and frontend together, then run with a single `node` command. The backend serves the frontend static files automatically.
+
+```bash
+pnpm run build:standalone
+pnpm start
+# → http://localhost:3001
+```
+
+### Desktop App (Electron)
+
+Package the application as a native desktop app:
+
+```bash
+pnpm run build:desktop
+```
+
+Output in `packages/desktop/out/` (DMG on macOS, AppImage on Linux, NSIS on Windows).
+
 ### Test
 
 ```bash
@@ -79,7 +100,7 @@ The backend uses [env-schema](https://github.com/fastify/env-schema) for environ
 |-----------------------|----------------------------------|------------------------------------------|
 | `PORT`                | `3001`                           | Backend server port                      |
 | `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | LocalStack endpoint URL                  |
-| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation`  | Comma-separated list of enabled services |
+| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services |
 
 Create a `.env` file in `packages/backend/` to override defaults.
 
@@ -92,10 +113,10 @@ By default, only a subset of services is enabled. You can control which services
 ENABLED_SERVICES=s3,sqs
 
 # Enable all available services
-ENABLED_SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation
+ENABLED_SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation,dynamodb
 ```
 
-Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront`, `cloudformation`.
+Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront`, `cloudformation`, `dynamodb`.
 
 When a service is disabled:
 - Its backend API routes are **not registered** (requests return 404)
@@ -108,6 +129,7 @@ The frontend fetches the list of enabled services from the `GET /api/services` e
 
 ```
 localstack-explorer/
+├── bundle/                 # tsup bundle output (build:bundle)
 ├── packages/
 │   ├── backend/            # Fastify API server
 │   │   └── src/
@@ -120,7 +142,8 @@ localstack-explorer/
 │   │       │   ├── sns/        # Complete implementation
 │   │       │   ├── iam/        # Scaffold
 │   │       │   ├── cloudfront/ # Scaffold
-│   │       │   └── cloudformation/ # Complete implementation
+│   │       │   ├── cloudformation/ # Complete implementation
+│   │       │   └── dynamodb/  # Complete implementation
 │   │       └── shared/         # Error handling, shared types
 │   └── frontend/           # React SPA
 │       └── src/
@@ -129,6 +152,10 @@ localstack-explorer/
 │           ├── api/            # TanStack Query hooks
 │           ├── stores/         # Zustand state management
 │           └── lib/            # Utilities and API client
+│   └── desktop/            # Electron desktop app
+│       ├── main.cjs            # Electron main process
+│       ├── electron-builder.json
+│       └── scripts/            # Build helpers
 ├── docker-compose.yaml     # LocalStack dev environment
 ├── package.json            # Workspace root
 ├── pnpm-workspace.yaml
@@ -150,6 +177,9 @@ localstack-explorer/
 | Validation       | TypeBox 1                               |
 | Config           | env-schema (with dotenv)                |
 | Plugin Loading   | @fastify/autoload                       |
+| Static Serving   | @fastify/static (standalone/bundle mode)|
+| Bundler          | tsup (single-file CJS bundle)           |
+| Desktop          | Electron 33, electron-builder           |
 | Testing          | Vitest, React Testing Library           |
 
 ## Documentation

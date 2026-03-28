@@ -1,11 +1,14 @@
 {
-	"name": "localstack-explorer",
+	"name": "@fgiova/localstack-explorer",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm -r --parallel run dev",
 		"build": "pnpm -r run build",
-		"build:bundle": "rm -rf dist && pnpm --filter @localstack-explorer/frontend run build:bundle && pnpm --filter @localstack-explorer/backend run build:bundle",
+		"build:bundle": "rm -rf bundle && pnpm --filter @localstack-explorer/frontend run build:bundle && pnpm --filter @localstack-explorer/backend run build:bundle",
+		"build:standalone": "pnpm --filter @localstack-explorer/backend run build && pnpm --filter @localstack-explorer/frontend run build --outDir ../backend/dist/public --emptyOutDir",
+		"start": "node packages/backend/dist/index.js",
+		"build:desktop": "pnpm run build:bundle && pnpm --filter @localstack-explorer/desktop run build",
 		"test": "pnpm -r run test",
 		"check": "biome check",
 		"check:fix": "biome check --fix",
@@ -20,7 +23,8 @@
 	},
 	"workspaces": [
 		"packages/backend",
-		"packages/frontend"
+		"packages/frontend",
+		"packages/desktop"
 	],
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.9"

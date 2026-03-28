@@ -1,7 +1,9 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
 import autoload from "@fastify/autoload";
 import { config } from "./config.js";
 import { registerErrorHandler } from "./shared/errors.js";
@@ -42,6 +44,20 @@ async function main() {
       return enabledSet.has(topDir);
     },
   });
+
+  // Serve frontend static files if public directory exists
+  const publicDir = path.join(__dirname, "..", "public");
+  if (fs.existsSync(publicDir)) {
+    await app.register(fastifyStatic, {
+      root: publicDir,
+      wildcard: false,
+    });
+
+    // SPA fallback: serve index.html for all non-API routes
+    app.setNotFoundHandler((_request, reply) => {
+      return reply.sendFile("index.html");
+    });
+  }
 
   try {
     await app.listen({ port: config.port, host: "0.0.0.0" });

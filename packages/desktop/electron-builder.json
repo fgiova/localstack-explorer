@@ -1,0 +1,25 @@
+{
+  "appId": "com.localstack-explorer.app",
+  "productName": "LocalStack Explorer",
+  "files": [
+    "main.cjs",
+    "bundle.cjs",
+    "public/**/*",
+    "icon.png"
+  ],
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "icon": "icon.png"
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "category": "Development"
+  },
+  "win": {
+    "target": ["nsis"],
+    "icon": "icon.png"
+  },
+  "directories": {
+    "output": "out"
+  }
+}
