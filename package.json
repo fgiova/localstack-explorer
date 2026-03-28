@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "pnpm -r --parallel run dev",
 		"build": "pnpm -r run build",
+		"build:bundle": "rm -rf dist && pnpm --filter @localstack-explorer/frontend run build:bundle && pnpm --filter @localstack-explorer/backend run build:bundle",
 		"test": "pnpm -r run test",
 		"check": "biome check",
 		"check:fix": "biome check --fix",
