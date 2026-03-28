@@ -99,7 +99,13 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
         );
         if (!pollingRef.current) break;
         if (result.messages.length > 0) {
-          setMessages((prev) => [...prev, ...result.messages]);
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.messageId));
+            const newMessages = result.messages.filter(
+              (m) => !existingIds.has(m.messageId)
+            );
+            return newMessages.length > 0 ? [...prev, ...newMessages] : prev;
+          });
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") break;

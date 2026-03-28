@@ -179,7 +179,7 @@ export function useDeleteMessage(queueName: string) {
   return useMutation({
     mutationFn: ({ receiptHandle }: DeleteMessageRequest) =>
       apiClient.delete<{ success: boolean }>(
-        `/sqs/${queueName}/messages?receiptHandle=${encodeURIComponent(receiptHandle)}`
+        `/sqs/${queueName}/messages`, { receiptHandle }
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sqs", "messages", queueName] });

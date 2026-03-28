@@ -49,8 +49,12 @@ export const apiClient = {
     return handleResponse<T>(response);
   },
 
-  async delete<T>(path: string): Promise<T> {
-    const response = await fetch(`${BASE_URL}${path}`, { method: "DELETE" });
+  async delete<T>(path: string, body?: unknown): Promise<T> {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: "DELETE",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
     return handleResponse<T>(response);
   },
 
