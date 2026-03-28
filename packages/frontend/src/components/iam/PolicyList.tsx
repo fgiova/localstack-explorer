@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Search } from "lucide-react";
-import { useListUsers, useDeleteUser } from "@/api/iam";
+import { useListPolicies, useDeletePolicy } from "@/api/iam";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,23 +9,28 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { CreateUserDialog } from "./CreateUserDialog";
+import { CreatePolicyDialog } from "./CreatePolicyDialog";
 
 function truncateArn(arn: string, maxLength = 50): string {
   if (arn.length <= maxLength) return arn;
   return arn.slice(0, maxLength - 3) + "...";
 }
 
-export function UserList() {
-  const { data, isLoading, error } = useListUsers();
-  const deleteUser = useDeleteUser();
+export function PolicyList() {
+  const { data, isLoading, error } = useListPolicies("Local");
+  const deletePolicy = useDeletePolicy();
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const filteredUsers = data?.users.filter((u) =>
-    u.userName.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPolicies = data?.policies.filter((p) =>
+    p.policyName.toLowerCase().includes(searchTerm.toLowerCase())
   ) ?? [];
+
+  // Find the policy name for the delete confirmation message
+  const deleteTargetName = deleteTarget
+    ? data?.policies.find((p) => p.arn === deleteTarget)?.policyName ?? deleteTarget
+    : null;
 
   if (isLoading) {
     return (
@@ -38,7 +43,7 @@ export function UserList() {
   if (error) {
     return (
       <div className="rounded-md border border-destructive p-4 text-destructive">
-        Error loading users: {error.message}
+        Error loading policies: {error.message}
       </div>
     );
   }
@@ -46,65 +51,70 @@ export function UserList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">IAM Users</h2>
+        <h2 className="text-2xl font-bold">Managed Policies</h2>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Create User
+          Create Policy
         </Button>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search users..."
+          placeholder="Search policies..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
         />
       </div>
 
-      {filteredUsers.length === 0 ? (
+      {filteredPolicies.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
-          {data?.users.length === 0
-            ? "No users found. Create one to get started."
-            : "No users match your search."}
+          {data?.policies.length === 0
+            ? "No policies found. Create one to get started."
+            : "No policies match your search."}
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User Name</TableHead>
-              <TableHead>User ID</TableHead>
+              <TableHead>Policy Name</TableHead>
               <TableHead>ARN</TableHead>
+              <TableHead>Attachments</TableHead>
+              <TableHead>Default Version</TableHead>
               <TableHead>Created Date</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.userId}>
+            {filteredPolicies.map((policy) => (
+              <TableRow key={policy.arn}>
                 <TableCell>
                   <a
-                    href={`/iam/users/${user.userName}`}
+                    href={`/iam/policies/${encodeURIComponent(policy.arn)}`}
                     className="font-medium text-primary hover:underline"
                   >
-                    {user.userName}
+                    {policy.policyName}
                   </a>
                 </TableCell>
-                <TableCell className="text-muted-foreground font-mono text-sm">
-                  {user.userId}
+                <TableCell
+                  className="text-muted-foreground font-mono text-sm"
+                  title={policy.arn}
+                >
+                  {truncateArn(policy.arn)}
                 </TableCell>
-                <TableCell className="text-muted-foreground font-mono text-sm" title={user.arn}>
-                  {truncateArn(user.arn)}
-                </TableCell>
+                <TableCell>{policy.attachmentCount ?? 0}</TableCell>
+                <TableCell>{policy.defaultVersionId ?? "-"}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {user.createDate ? new Date(user.createDate).toLocaleDateString() : "-"}
+                  {policy.createDate
+                    ? new Date(policy.createDate).toLocaleDateString()
+                    : "-"}
                 </TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setDeleteTarget(user.userName)}
+                    onClick={() => setDeleteTarget(policy.arn)}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
@@ -115,15 +125,15 @@ export function UserList() {
         </Table>
       )}
 
-      <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <CreatePolicyDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
+            <DialogTitle>Delete Policy</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete user &quot;{deleteTarget}&quot;? This action cannot be undone.
+              Are you sure you want to delete policy &quot;{deleteTargetName}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -134,14 +144,14 @@ export function UserList() {
               variant="destructive"
               onClick={() => {
                 if (deleteTarget) {
-                  deleteUser.mutate(deleteTarget, {
+                  deletePolicy.mutate(deleteTarget, {
                     onSettled: () => setDeleteTarget(null),
                   });
                 }
               }}
-              disabled={deleteUser.isPending}
+              disabled={deletePolicy.isPending}
             >
-              {deleteUser.isPending ? "Deleting..." : "Delete"}
+              {deletePolicy.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

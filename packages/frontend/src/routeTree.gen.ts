@@ -19,6 +19,9 @@ import { Route as CloudformationIndexRouteImport } from './routes/cloudformation
 import { Route as SqsQueueNameRouteImport } from './routes/sqs/$queueName'
 import { Route as SnsTopicNameRouteImport } from './routes/sns/$topicName'
 import { Route as S3BucketNameRouteImport } from './routes/s3/$bucketName'
+import { Route as IamUsersUserNameRouteImport } from './routes/iam/users/$userName'
+import { Route as IamPoliciesPolicyArnRouteImport } from './routes/iam/policies/$policyArn'
+import { Route as IamGroupsGroupNameRouteImport } from './routes/iam/groups/$groupName'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +73,21 @@ const S3BucketNameRoute = S3BucketNameRouteImport.update({
   path: '/s3/$bucketName',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IamUsersUserNameRoute = IamUsersUserNameRouteImport.update({
+  id: '/iam/users/$userName',
+  path: '/iam/users/$userName',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamPoliciesPolicyArnRoute = IamPoliciesPolicyArnRouteImport.update({
+  id: '/iam/policies/$policyArn',
+  path: '/iam/policies/$policyArn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamGroupsGroupNameRoute = IamGroupsGroupNameRouteImport.update({
+  id: '/iam/groups/$groupName',
+  path: '/iam/groups/$groupName',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +100,9 @@ export interface FileRoutesByFullPath {
   '/s3/': typeof S3IndexRoute
   '/sns/': typeof SnsIndexRoute
   '/sqs/': typeof SqsIndexRoute
+  '/iam/groups/$groupName': typeof IamGroupsGroupNameRoute
+  '/iam/policies/$policyArn': typeof IamPoliciesPolicyArnRoute
+  '/iam/users/$userName': typeof IamUsersUserNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +115,9 @@ export interface FileRoutesByTo {
   '/s3': typeof S3IndexRoute
   '/sns': typeof SnsIndexRoute
   '/sqs': typeof SqsIndexRoute
+  '/iam/groups/$groupName': typeof IamGroupsGroupNameRoute
+  '/iam/policies/$policyArn': typeof IamPoliciesPolicyArnRoute
+  '/iam/users/$userName': typeof IamUsersUserNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +131,9 @@ export interface FileRoutesById {
   '/s3/': typeof S3IndexRoute
   '/sns/': typeof SnsIndexRoute
   '/sqs/': typeof SqsIndexRoute
+  '/iam/groups/$groupName': typeof IamGroupsGroupNameRoute
+  '/iam/policies/$policyArn': typeof IamPoliciesPolicyArnRoute
+  '/iam/users/$userName': typeof IamUsersUserNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +148,9 @@ export interface FileRouteTypes {
     | '/s3/'
     | '/sns/'
     | '/sqs/'
+    | '/iam/groups/$groupName'
+    | '/iam/policies/$policyArn'
+    | '/iam/users/$userName'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +163,9 @@ export interface FileRouteTypes {
     | '/s3'
     | '/sns'
     | '/sqs'
+    | '/iam/groups/$groupName'
+    | '/iam/policies/$policyArn'
+    | '/iam/users/$userName'
   id:
     | '__root__'
     | '/'
@@ -145,6 +178,9 @@ export interface FileRouteTypes {
     | '/s3/'
     | '/sns/'
     | '/sqs/'
+    | '/iam/groups/$groupName'
+    | '/iam/policies/$policyArn'
+    | '/iam/users/$userName'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +194,9 @@ export interface RootRouteChildren {
   S3IndexRoute: typeof S3IndexRoute
   SnsIndexRoute: typeof SnsIndexRoute
   SqsIndexRoute: typeof SqsIndexRoute
+  IamGroupsGroupNameRoute: typeof IamGroupsGroupNameRoute
+  IamPoliciesPolicyArnRoute: typeof IamPoliciesPolicyArnRoute
+  IamUsersUserNameRoute: typeof IamUsersUserNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +271,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof S3BucketNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/iam/users/$userName': {
+      id: '/iam/users/$userName'
+      path: '/iam/users/$userName'
+      fullPath: '/iam/users/$userName'
+      preLoaderRoute: typeof IamUsersUserNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/policies/$policyArn': {
+      id: '/iam/policies/$policyArn'
+      path: '/iam/policies/$policyArn'
+      fullPath: '/iam/policies/$policyArn'
+      preLoaderRoute: typeof IamPoliciesPolicyArnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/groups/$groupName': {
+      id: '/iam/groups/$groupName'
+      path: '/iam/groups/$groupName'
+      fullPath: '/iam/groups/$groupName'
+      preLoaderRoute: typeof IamGroupsGroupNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +306,9 @@ const rootRouteChildren: RootRouteChildren = {
   S3IndexRoute: S3IndexRoute,
   SnsIndexRoute: SnsIndexRoute,
   SqsIndexRoute: SqsIndexRoute,
+  IamGroupsGroupNameRoute: IamGroupsGroupNameRoute,
+  IamPoliciesPolicyArnRoute: IamPoliciesPolicyArnRoute,
+  IamUsersUserNameRoute: IamUsersUserNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

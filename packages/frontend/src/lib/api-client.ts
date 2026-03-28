@@ -34,7 +34,7 @@ export const apiClient = {
   async post<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(response);
@@ -43,7 +43,7 @@ export const apiClient = {
   async put<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(response);
