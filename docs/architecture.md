@@ -80,9 +80,13 @@ src/
     │   ├── schemas.ts    # TypeBox schemas for topics, subscriptions, publish, tags
     │   ├── service.ts    # SNSService — topic, subscription, publish, and tag operations
     │   └── routes.ts     # Topic CRUD, subscriptions, publish single/batch, tags
+    ├── cloudformation/   # Complete implementation (same structure)
+    │   ├── index.ts      # Plugin entry — creates CloudFormation client and service
+    │   ├── schemas.ts    # TypeBox schemas for stacks, events, templates
+    │   ├── service.ts    # CloudFormationService — stack CRUD, update, events, template
+    │   └── routes.ts     # Stack CRUD, update, events, template retrieval
     ├── iam/              # Scaffold
-    ├── cloudfront/       # Scaffold
-    └── cloudformation/   # Scaffold
+    └── cloudfront/       # Scaffold
 ```
 
 > **Important:** Plugin entry points (`index.ts`) must export a plain async function — **not** wrapped with `fastify-plugin`. Autoload needs encapsulation enabled to apply directory-based route prefixes.
@@ -150,6 +154,8 @@ main.tsx
                      ├── sqs/$queueName.tsx (QueueDetail)
                      ├── sns/index.tsx (TopicList)
                      ├── sns/$topicName.tsx (TopicDetail)
+                     ├── cloudformation/index.tsx (StackList)
+                     ├── cloudformation/$stackName.tsx (StackDetail)
                      └── ...service routes
 ```
 
