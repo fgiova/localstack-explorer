@@ -11,8 +11,8 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | S3             | Fully implemented | Buckets, objects, upload/download                                 |
 | SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
 | SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
-| IAM            | Scaffold          | User, role, and policy management                                 |
-| CloudFront     | Scaffold          | Distribution management                                           |
+| IAM            | Fully implemented | Users, groups, managed/inline policies, access keys, versioning   |
+| CloudFront     | Fully implemented | Distribution create, update, delete, list, detail (**Pro only**)  |
 | CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
 | DynamoDB       | Fully implemented | Table management, create, list, detail views                      |
 
@@ -27,7 +27,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 ### Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/fgiova/localstack-explorer.git
 cd localstack-explorer
 pnpm install
 ```
@@ -116,7 +116,7 @@ ENABLED_SERVICES=s3,sqs
 ENABLED_SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation,dynamodb
 ```
 
-Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront`, `cloudformation`, `dynamodb`.
+Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront` (requires [LocalStack Pro](https://localstack.cloud/pricing)), `cloudformation`, `dynamodb`.
 
 When a service is disabled:
 - Its backend API routes are **not registered** (requests return 404)
@@ -133,15 +133,16 @@ localstack-explorer/
 ├── packages/
 │   ├── backend/            # Fastify API server
 │   │   └── src/
-│   │       ├── index.ts        # Entry point (autoload plugins)
+│   │       ├── index.ts        # Entry point (autoload plugins, serves frontend)
+│   │       ├── bundle.ts       # Bundle entry point (explicit plugin imports)
 │   │       ├── config.ts       # env-schema configuration
 │   │       ├── aws/            # AWS SDK client factories
 │   │       ├── plugins/        # Auto-loaded plugins (one per service)
 │   │       │   ├── s3/         # Complete implementation
 │   │       │   ├── sqs/        # Complete implementation
 │   │       │   ├── sns/        # Complete implementation
-│   │       │   ├── iam/        # Scaffold
-│   │       │   ├── cloudfront/ # Scaffold
+│   │       │   ├── iam/        # Complete implementation
+│   │       │   ├── cloudfront/ # Complete implementation
 │   │       │   ├── cloudformation/ # Complete implementation
 │   │       │   └── dynamodb/  # Complete implementation
 │   │       └── shared/         # Error handling, shared types
@@ -187,7 +188,10 @@ localstack-explorer/
 - **[S3 Service Guide](docs/s3-service.md)** — Complete reference for S3 operations: buckets, objects, upload/download, and API endpoints.
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
+- **[IAM Service Guide](docs/iam.md)** — Complete reference for IAM operations: users, groups, managed/inline policies, access keys, policy versioning, and cascading deletes.
+- **[CloudFront Service Guide](docs/cloudfront.md)** — Complete reference for CloudFront operations: distribution create, update, delete, list, and detail views. Requires LocalStack Pro.
 - **[CloudFormation Service Guide](docs/cloudformation.md)** — Complete reference for CloudFormation operations: stack CRUD, update, template editor, events timeline, and cross-service resource navigation.
+- **[DynamoDB Service Guide](docs/dynamodb.md)** — Complete reference for DynamoDB operations: table management, creation, listing, and detail views.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.
 - **[Architecture](docs/architecture.md)** — System design, backend plugin pattern, frontend data flow, and project conventions.
 - **[Development Guide](docs/development.md)** — Local setup, testing, coding standards, and contribution workflow.
