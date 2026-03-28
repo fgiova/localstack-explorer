@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { useSendMessage } from "@/api/sqs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
 // TODO: FIFO support
 // - Add MessageGroupId input (required when queue is FIFO)
@@ -26,14 +29,71 @@ interface SendMessageFormProps {
 
 let nextId = 1;
 
+function isValidJson(value: string): boolean {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function SendMessageForm({ queueName }: SendMessageFormProps) {
   const [body, setBody] = useState("");
   const [delaySeconds, setDelaySeconds] = useState<string>("");
   const [attributes, setAttributes] = useState<MessageAttributeRow[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [jsonMode, setJsonMode] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   const sendMessage = useSendMessage(queueName);
+
+  const validateJson = useCallback((value: string) => {
+    if (!value.trim()) {
+      setJsonError(null);
+      return;
+    }
+    if (isValidJson(value)) {
+      setJsonError(null);
+    } else {
+      setJsonError("Invalid JSON");
+    }
+  }, []);
+
+  function handleJsonModeToggle(checked: boolean) {
+    if (checked) {
+      // Switching to JSON mode: validate current content if not empty
+      if (body.trim() && !isValidJson(body)) {
+        setJsonError("Current content is not valid JSON. Fix it before switching to JSON mode.");
+        return;
+      }
+      // Pretty-print if valid
+      if (body.trim()) {
+        setBody(JSON.stringify(JSON.parse(body), null, 2));
+      }
+      setJsonError(null);
+      setJsonMode(true);
+    } else {
+      setJsonMode(false);
+      setJsonError(null);
+    }
+  }
+
+  function handleFormat() {
+    if (isValidJson(body)) {
+      setBody(JSON.stringify(JSON.parse(body), null, 2));
+      setJsonError(null);
+    } else {
+      setJsonError("Cannot format: invalid JSON");
+    }
+  }
+
+  function handleEditorChange(value: string | undefined) {
+    const newValue = value ?? "";
+    setBody(newValue);
+    validateJson(newValue);
+  }
 
   function addAttribute() {
     setAttributes((prev) => [
@@ -62,6 +122,7 @@ export function SendMessageForm({ queueName }: SendMessageFormProps) {
     setBody("");
     setDelaySeconds("");
     setAttributes([]);
+    setJsonError(null);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -89,8 +150,13 @@ export function SendMessageForm({ queueName }: SendMessageFormProps) {
       }
     }
 
+    // Minify JSON if in JSON mode
+    const messageBody = jsonMode && isValidJson(body)
+      ? JSON.stringify(JSON.parse(body))
+      : body;
+
     const request = {
-      body,
+      body: messageBody,
       ...(delaySeconds !== "" && {
         delaySeconds: Number(delaySeconds),
       }),
@@ -111,21 +177,82 @@ export function SendMessageForm({ queueName }: SendMessageFormProps) {
   }
 
   const isPending = sendMessage.isPending;
+  const hasJsonError = jsonMode && jsonError !== null;
+  const canSubmit = body.trim() && !isPending && !hasJsonError;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* JSON mode toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="json-mode"
+            checked={jsonMode}
+            onCheckedChange={handleJsonModeToggle}
+            disabled={isPending}
+          />
+          <Label htmlFor="json-mode" className="text-sm">
+            JSON Editor
+          </Label>
+        </div>
+        {jsonMode && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleFormat}
+            disabled={isPending || !body.trim()}
+          >
+            Format
+          </Button>
+        )}
+      </div>
+
       {/* Message Body */}
       <div className="space-y-1.5">
         <Label htmlFor="message-body">Message Body *</Label>
-        <Textarea
-          id="message-body"
-          placeholder="Enter message body..."
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          required
-          rows={4}
-          disabled={isPending}
-        />
+        {jsonMode ? (
+          <Suspense
+            fallback={
+              <div className="flex h-[200px] items-center justify-center rounded-md border">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            }
+          >
+            <div className="overflow-hidden rounded-md border">
+              <MonacoEditor
+                height="200px"
+                language="json"
+                value={body}
+                onChange={handleEditorChange}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 13,
+                  lineNumbers: "on",
+                  automaticLayout: true,
+                  tabSize: 2,
+                  formatOnPaste: true,
+                  readOnly: isPending,
+                }}
+                theme="vs-dark"
+              />
+            </div>
+          </Suspense>
+        ) : (
+          <Textarea
+            id="message-body"
+            placeholder="Enter message body..."
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            required
+            rows={4}
+            disabled={isPending}
+          />
+        )}
+        {jsonError && (
+          <p className="text-sm text-destructive">{jsonError}</p>
+        )}
       </div>
 
       {/* Delay Seconds */}
@@ -228,7 +355,7 @@ export function SendMessageForm({ queueName }: SendMessageFormProps) {
       )}
 
       {/* Submit */}
-      <Button type="submit" disabled={isPending || !body.trim()}>
+      <Button type="submit" disabled={!canSubmit}>
         {isPending ? "Sending..." : "Send Message"}
       </Button>
     </form>

@@ -160,8 +160,9 @@ export class SQSService {
 
   async receiveMessages(
     queueName: string,
-    maxMessages: number = 10,
-    waitTimeSeconds: number = 0
+    maxMessages: number = 1,
+    waitTimeSeconds: number = 20,
+    abortSignal?: AbortSignal
     // TODO: FIFO support
     // - receiveMessages should return SequenceNumber for FIFO messages
   ) {
@@ -173,7 +174,8 @@ export class SQSService {
         MaxNumberOfMessages: maxMessages,
         WaitTimeSeconds: waitTimeSeconds,
         MessageAttributeNames: ["All"],
-      })
+      }),
+      { abortSignal }
     );
 
     const messages = (response.Messages ?? []).map((msg) => ({

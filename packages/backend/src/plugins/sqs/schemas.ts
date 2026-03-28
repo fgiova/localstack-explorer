@@ -73,8 +73,8 @@ export const SendMessageResponseSchema = Type.Object({
 export type SendMessageResponse = Static<typeof SendMessageResponseSchema>;
 
 export const ReceiveMessagesQuerySchema = Type.Object({
-  maxMessages: Type.Optional(Type.Integer({ default: 10 })),
-  waitTimeSeconds: Type.Optional(Type.Integer()),
+  maxMessages: Type.Optional(Type.Integer({ minimum: 1, maximum: 10, default: 1 })),
+  waitTimeSeconds: Type.Optional(Type.Integer({ minimum: 0, maximum: 20, default: 20 })),
 });
 export type ReceiveMessagesQuery = Static<typeof ReceiveMessagesQuerySchema>;
 

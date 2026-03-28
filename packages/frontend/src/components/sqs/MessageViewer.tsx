@@ -1,8 +1,27 @@
-import { useState } from "react";
-import { useReceiveMessages, useDeleteMessage } from "@/api/sqs";
+import { useState, useRef, useEffect } from "react";
+import { Play, Square, Trash2 } from "lucide-react";
+import { receiveMessagesPoll, useDeleteMessage } from "@/api/sqs";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select } from "@/components/ui/select";
+
+interface MessageAttribute {
+  dataType: string;
+  stringValue?: string;
+  binaryValue?: string;
+}
+
+interface Message {
+  messageId: string;
+  receiptHandle: string;
+  body: string;
+  attributes?: Record<string, string>;
+  messageAttributes?: Record<string, MessageAttribute>;
+  md5OfBody?: string;
+}
 
 interface MessageViewerProps {
   queueName: string;
@@ -18,54 +37,226 @@ function formatBody(body: string): { isJson: boolean; content: string } {
 }
 
 export function MessageViewer({ queueName }: MessageViewerProps) {
-  const [enabled, setEnabled] = useState(false);
-
-  const { data, isFetching, refetch } = useReceiveMessages(queueName, {
-    maxNumberOfMessages: 10,
-  });
+  const [continuousMode, setContinuousMode] = useState(false);
+  const [maxMessages, setMaxMessages] = useState("1");
+  const [waitTimeSeconds, setWaitTimeSeconds] = useState("20");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollError, setPollError] = useState<string | null>(null);
+  const [hasPolled, setHasPolled] = useState(false);
+  const pollingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const deleteMessage = useDeleteMessage(queueName);
 
-  const messages = data?.messages ?? [];
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      pollingRef.current = false;
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
-  function handleReceive() {
-    setEnabled(true);
-    refetch();
-  }
+  const handleSinglePoll = async () => {
+    setIsPolling(true);
+    setPollError(null);
+    setHasPolled(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    try {
+      const result = await receiveMessagesPoll(
+        queueName,
+        parseInt(maxMessages),
+        parseInt(waitTimeSeconds),
+        controller.signal
+      );
+      setMessages(result.messages);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
+      setPollError(
+        e instanceof Error ? e.message : "Failed to receive messages"
+      );
+    } finally {
+      setIsPolling(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const startPolling = async () => {
+    pollingRef.current = true;
+    setIsPolling(true);
+    setPollError(null);
+    setHasPolled(true);
+    while (pollingRef.current) {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      try {
+        const result = await receiveMessagesPoll(
+          queueName,
+          parseInt(maxMessages),
+          parseInt(waitTimeSeconds),
+          controller.signal
+        );
+        if (!pollingRef.current) break;
+        if (result.messages.length > 0) {
+          setMessages((prev) => [...prev, ...result.messages]);
+        }
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") break;
+        if (!pollingRef.current) break;
+        setPollError(
+          e instanceof Error ? e.message : "Failed to receive messages"
+        );
+        break;
+      }
+    }
+    abortControllerRef.current = null;
+    setIsPolling(false);
+  };
+
+  const stopPolling = () => {
+    pollingRef.current = false;
+    abortControllerRef.current?.abort();
+  };
 
   function handleDelete(receiptHandle: string) {
-    deleteMessage.mutate({ receiptHandle });
+    deleteMessage.mutate(
+      { receiptHandle },
+      {
+        onSuccess: () => {
+          setMessages((prev) =>
+            prev.filter((m) => m.receiptHandle !== receiptHandle)
+          );
+        },
+      }
+    );
   }
+
+  const clearMessages = () => {
+    setMessages([]);
+  };
 
   return (
     <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="continuous-mode"
+            checked={continuousMode}
+            onCheckedChange={(checked: boolean) => {
+              if (isPolling) stopPolling();
+              setContinuousMode(checked);
+            }}
+            disabled={isPolling}
+          />
+          <Label htmlFor="continuous-mode" className="text-sm">
+            {continuousMode ? "Continuous" : "Single Poll"}
+          </Label>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label className="text-sm whitespace-nowrap">Max Messages</Label>
+          <Select
+            value={maxMessages}
+            onChange={(e) => setMaxMessages(e.target.value)}
+            disabled={isPolling}
+            className="w-[70px]"
+          >
+            {Array.from({ length: 10 }, (_, i) => (
+              <option key={i + 1} value={String(i + 1)}>
+                {i + 1}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label className="text-sm whitespace-nowrap">Wait (s)</Label>
+          <Select
+            value={waitTimeSeconds}
+            onChange={(e) => setWaitTimeSeconds(e.target.value)}
+            disabled={isPolling}
+            className="w-[70px]"
+          >
+            {[1, 2, 5, 10, 15, 20].map((s) => (
+              <option key={s} value={String(s)}>
+                {s}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
+      {/* Action buttons */}
       <div className="flex items-center gap-3">
-        <Button onClick={handleReceive} disabled={isFetching}>
-          {isFetching ? "Receiving..." : "Receive Messages"}
-        </Button>
-        {enabled && !isFetching && (
-          <span className="text-sm text-muted-foreground">
-            {messages.length === 0
-              ? "No messages available"
-              : `${messages.length} message${messages.length === 1 ? "" : "s"} received`}
-          </span>
+        {continuousMode ? (
+          <Button
+            onClick={isPolling ? stopPolling : startPolling}
+            variant={isPolling ? "destructive" : "default"}
+          >
+            {isPolling ? (
+              <>
+                <Square className="mr-2 h-4 w-4" />
+                Stop
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Start
+              </>
+            )}
+          </Button>
+        ) : isPolling ? (
+          <Button onClick={stopPolling} variant="destructive">
+            <Square className="mr-2 h-4 w-4" />
+            Stop
+          </Button>
+        ) : (
+          <Button onClick={handleSinglePoll}>
+            <Play className="mr-2 h-4 w-4" />
+            Poll
+          </Button>
+        )}
+        {messages.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={clearMessages}
+            disabled={isPolling}
+          >
+            Clear
+          </Button>
+        )}
+        <Badge variant="secondary" className="ml-auto">
+          {messages.length} message{messages.length !== 1 ? "s" : ""}
+        </Badge>
+        {isPolling && (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         )}
       </div>
 
-      {enabled && !isFetching && messages.length === 0 && (
+      {pollError && (
+        <div className="rounded-md border border-destructive p-3 text-sm text-destructive">
+          {pollError}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {hasPolled && !isPolling && messages.length === 0 && !pollError && (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           The queue is empty or no messages are currently visible.
         </div>
       )}
 
-      {messages.map((message) => {
+      {/* Messages */}
+      {messages.map((message, index) => {
         const { isJson, content } = formatBody(message.body);
         const hasAttributes =
           message.messageAttributes &&
           Object.keys(message.messageAttributes).length > 0;
 
         return (
-          <Card key={message.messageId}>
+          <Card key={`${message.messageId}-${index}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-mono text-muted-foreground break-all">
                 ID: {message.messageId}
@@ -122,6 +313,7 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
                 disabled={deleteMessage.isPending}
                 onClick={() => handleDelete(message.receiptHandle)}
               >
+                <Trash2 className="mr-2 h-4 w-4" />
                 {deleteMessage.isPending ? "Deleting..." : "Delete"}
               </Button>
             </CardFooter>

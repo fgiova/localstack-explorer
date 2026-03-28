@@ -1,14 +1,18 @@
 # SQS Service Guide
 
-SQS (Simple Queue Service) is a fully implemented service in LocalStack Explorer. It supports queue management, message operations, queue attribute inspection, and queue purging.
+SQS is a fully implemented service in LocalStack Explorer. It supports queue management, message send/receive with real long polling, message deletion, queue attributes inspection, and queue purging.
 
 ## Features
 
-- List all queues
-- Create and delete queues
-- View queue attributes (message counts, retention policy, visibility timeout, and more)
+- List, create, and delete queues
+- View queue attributes (message counts, visibility timeout, delay, retention, etc.)
 - Send messages with optional delay and custom message attributes
-- Receive and delete messages
+- JSON editor (Monaco, lazy-loaded) for composing message bodies with validation, formatting, and auto-minification on send
+- Receive messages with configurable long polling (WaitTimeSeconds 0--20, default 20)
+- Two receive modes: **Single Poll** (one-shot, replaces results) and **Continuous** (start/stop loop, accumulates results)
+- Configurable MaxNumberOfMessages (1--10, default 1)
+- Immediate abort of in-flight receive requests (frontend AbortController + backend AbortSignal propagation to AWS SDK)
+- Delete individual messages
 - Purge all messages from a queue
 - Search/filter queues by name
 
@@ -18,21 +22,21 @@ All endpoints are prefixed with `/api/sqs`.
 
 ### Queues
 
-| Method | Path                    | Description         | Request Body           | Response                        |
-|--------|-------------------------|---------------------|------------------------|---------------------------------|
-| GET    | `/`                     | List queues         | —                      | `{ queues: [...] }`             |
-| POST   | `/`                     | Create queue        | `{ name: string }`     | `{ message: string }`           |
-| DELETE | `/:queueName`           | Delete queue        | —                      | `{ success: boolean }`          |
-| POST   | `/:queueName/purge`     | Purge queue         | —                      | `{ success: boolean }`          |
-| GET    | `/:queueName/attributes`| Get queue attributes| —                      | `{ queueUrl, queueName, attributes }` |
+| Method | Path                       | Description       | Request             | Response                  |
+|--------|----------------------------|-------------------|---------------------|---------------------------|
+| GET    | `/`                        | List queues       | --                  | `{ queues: [...] }`       |
+| POST   | `/`                        | Create queue      | `{ name: string }`  | `{ message: string }`     |
+| DELETE | `/:queueName`              | Delete queue      | --                  | `{ success: boolean }`    |
+| POST   | `/:queueName/purge`        | Purge queue       | --                  | `{ success: boolean }`    |
+| GET    | `/:queueName/attributes`   | Queue attributes  | --                  | `QueueDetailResponse`     |
 
 ### Messages
 
-| Method | Path                    | Description       | Request / Query Params                                   | Response                         |
-|--------|-------------------------|-------------------|----------------------------------------------------------|----------------------------------|
-| POST   | `/:queueName/messages`  | Send message      | Body: `{ body, delaySeconds?, messageAttributes? }`      | `{ messageId: string }`          |
-| GET    | `/:queueName/messages`  | Receive messages  | Query: `maxMessages` (default 10), `waitTimeSeconds`     | `{ messages: [...] }`            |
-| DELETE | `/:queueName/messages`  | Delete message    | Body: `{ receiptHandle: string }`                        | `{ success: boolean }`           |
+| Method | Path                       | Description       | Request / Query Params                                         | Response                     |
+|--------|----------------------------|-------------------|----------------------------------------------------------------|------------------------------|
+| POST   | `/:queueName/messages`     | Send message      | `{ body, delaySeconds?, messageAttributes? }`                  | `{ messageId: string }`      |
+| GET    | `/:queueName/messages`     | Receive messages  | `?maxMessages=1-10&waitTimeSeconds=0-20`                       | `{ messages: [...] }`        |
+| DELETE | `/:queueName/messages`     | Delete message    | `{ receiptHandle: string }`                                    | `{ success: boolean }`       |
 
 ### Request/Response Examples
 
@@ -61,10 +65,6 @@ curl -X POST http://localhost:3001/api/sqs \
   -d '{"name": "my-queue"}'
 ```
 
-```json
-{ "message": "Queue 'my-queue' created successfully" }
-```
-
 **Get queue attributes:**
 
 ```bash
@@ -75,62 +75,55 @@ curl http://localhost:3001/api/sqs/my-queue/attributes
 {
   "queueUrl": "http://localhost:4566/000000000000/my-queue",
   "queueName": "my-queue",
-  "attributes": {
-    "ApproximateNumberOfMessages": "3",
-    "ApproximateNumberOfMessagesNotVisible": "0",
-    "ApproximateNumberOfMessagesDelayed": "0",
-    "CreatedTimestamp": "1700000000",
-    "DelaySeconds": "0",
-    "VisibilityTimeout": "30",
-    "MaximumMessageSize": "262144",
-    "MessageRetentionPeriod": "345600"
-  }
+  "queueArn": "arn:aws:sqs:us-east-1:000000000000:my-queue",
+  "approximateNumberOfMessages": 5,
+  "approximateNumberOfMessagesNotVisible": 0,
+  "approximateNumberOfMessagesDelayed": 0,
+  "visibilityTimeout": 30,
+  "maximumMessageSize": 262144,
+  "messageRetentionPeriod": 345600,
+  "delaySeconds": 0,
+  "receiveMessageWaitTimeSeconds": 0
 }
 ```
 
-**Send message (simple):**
+**Send message:**
 
 ```bash
 curl -X POST http://localhost:3001/api/sqs/my-queue/messages \
   -H "Content-Type: application/json" \
-  -d '{"body": "Hello, World!"}'
+  -d '{"body": "Hello, World!", "delaySeconds": 5}'
 ```
 
-```json
-{ "messageId": "abc12345-1234-1234-1234-abc123456789" }
-```
-
-**Send message with delay and message attributes:**
+**Send message with attributes:**
 
 ```bash
 curl -X POST http://localhost:3001/api/sqs/my-queue/messages \
   -H "Content-Type: application/json" \
   -d '{
-    "body": "Order placed",
-    "delaySeconds": 5,
+    "body": "{\"event\": \"order.created\", \"orderId\": 123}",
     "messageAttributes": {
-      "OrderId": { "DataType": "String", "StringValue": "ORD-001" },
-      "Priority": { "DataType": "String", "StringValue": "high" }
+      "eventType": { "DataType": "String", "StringValue": "order.created" }
     }
   }'
 ```
 
-**Receive messages:**
+**Receive messages (long polling, 20s wait, up to 5 messages):**
 
 ```bash
-curl "http://localhost:3001/api/sqs/my-queue/messages?maxMessages=5&waitTimeSeconds=2"
+curl "http://localhost:3001/api/sqs/my-queue/messages?maxMessages=5&waitTimeSeconds=20"
 ```
 
 ```json
 {
   "messages": [
     {
-      "messageId": "abc12345-1234-1234-1234-abc123456789",
+      "messageId": "abc-123",
       "body": "Hello, World!",
-      "receiptHandle": "AQEBwJnKyrHigUMZj...",
-      "messageAttributes": [
-        { "name": "OrderId", "dataType": "String", "stringValue": "ORD-001" }
-      ]
+      "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS...",
+      "messageAttributes": {
+        "eventType": { "DataType": "String", "StringValue": "order.created" }
+      }
     }
   ]
 }
@@ -144,76 +137,24 @@ curl -X DELETE http://localhost:3001/api/sqs/my-queue/messages \
   -d '{"receiptHandle": "AQEBwJnKyrHigUMZj..."}'
 ```
 
-```json
-{ "success": true }
-```
-
 **Purge queue:**
 
 ```bash
 curl -X POST http://localhost:3001/api/sqs/my-queue/purge
 ```
 
-```json
-{ "success": true }
-```
+## Long Polling & Abort
 
-**Delete queue:**
+The receive messages endpoint implements real SQS long polling. The `waitTimeSeconds` parameter (0--20, default 20) controls how long the server holds the connection open waiting for messages to become available.
 
-```bash
-curl -X DELETE http://localhost:3001/api/sqs/my-queue
-```
+When a client disconnects (e.g., user clicks Stop), the abort is propagated through the entire chain:
 
-```json
-{ "success": true }
-```
+1. **Frontend**: `AbortController.abort()` cancels the `fetch` request immediately
+2. **Backend route**: Fastify 5 exposes `request.signal` which fires on client disconnect
+3. **Service**: The `abortSignal` is passed to `client.send(command, { abortSignal })`
+4. **AWS SDK**: The `ReceiveMessageCommand` is aborted immediately, releasing the connection
 
-## Queue Attributes Explained
-
-Queue attributes are returned as strings by the AWS SQS API. All values in the `attributes` object are string-encoded numbers.
-
-| Attribute                               | Description                                                                                  |
-|-----------------------------------------|----------------------------------------------------------------------------------------------|
-| `ApproximateNumberOfMessages`           | Estimated number of messages available for retrieval                                         |
-| `ApproximateNumberOfMessagesNotVisible` | Messages in-flight (received by a consumer but not yet deleted or expired)                   |
-| `ApproximateNumberOfMessagesDelayed`    | Messages in the queue that are delayed and not yet available for retrieval                   |
-| `CreatedTimestamp`                      | Unix epoch timestamp (seconds) when the queue was created                                    |
-| `DelaySeconds`                          | Default message delay in seconds (0–900). Messages are hidden for this duration after send   |
-| `VisibilityTimeout`                     | Duration (seconds) that a received message is hidden from other consumers (default: 30)      |
-| `MaximumMessageSize`                    | Maximum allowed message size in bytes (default: 262144 = 256 KB)                             |
-| `MessageRetentionPeriod`                | How long (seconds) SQS retains messages (default: 345600 = 4 days; range: 60–1209600)       |
-
-## Message Attributes Support
-
-Message attributes let you attach metadata to a message without modifying the message body. They are passed as a key-value map where each entry specifies a `DataType` and a `StringValue`.
-
-Supported data types:
-- `String` — plain text value
-- `Number` — numeric value encoded as a string
-- `Binary` — not currently supported in this implementation
-
-**Send with message attributes:**
-
-```json
-{
-  "body": "My message",
-  "messageAttributes": {
-    "EventType": { "DataType": "String", "StringValue": "order.created" },
-    "Version":   { "DataType": "Number", "StringValue": "1" }
-  }
-}
-```
-
-**Received message attribute shape:**
-
-```json
-{
-  "messageAttributes": [
-    { "name": "EventType", "dataType": "String", "stringValue": "order.created" },
-    { "name": "Version",   "dataType": "Number", "stringValue": "1" }
-  ]
-}
-```
+This ensures no resources are wasted on long-polling requests that the user no longer needs.
 
 ## Error Handling
 
@@ -242,63 +183,100 @@ The SQS plugin consists of four files in `packages/backend/src/plugins/sqs/`:
 
 | File          | Purpose                                                                             |
 |---------------|-------------------------------------------------------------------------------------|
-| `index.ts`    | Plugin registration — creates the SQS client and service, registers routes         |
-| `service.ts`  | `SQSService` class — business logic wrapping AWS SDK calls                          |
+| `index.ts`    | Plugin registration -- creates the SQS client and service, registers routes         |
+| `service.ts`  | `SQSService` class -- business logic wrapping AWS SDK calls                         |
 | `routes.ts`   | Fastify route definitions with TypeBox validation schemas                           |
 | `schemas.ts`  | TypeBox schemas for all request inputs and response outputs                         |
 
 ### SQSService Methods
 
-| Method                              | AWS SDK Command             | Description                                  |
-|-------------------------------------|-----------------------------|----------------------------------------------|
-| `listQueues()`                      | `ListQueuesCommand`         | Returns all queue URLs and names             |
-| `createQueue(name)`                 | `CreateQueueCommand`        | Creates a new standard queue                 |
-| `deleteQueue(queueName)`            | `DeleteQueueCommand`        | Deletes a queue by name                      |
-| `purgeQueue(queueName)`             | `PurgeQueueCommand`         | Deletes all messages from a queue            |
-| `getQueueAttributes(queueName)`     | `GetQueueAttributesCommand` | Returns all queue attributes                 |
-| `sendMessage(queueName, ...)`       | `SendMessageCommand`        | Sends a message, with optional delay and attributes |
-| `receiveMessages(queueName, ...)`   | `ReceiveMessageCommand`     | Polls for up to N messages                   |
-| `deleteMessage(queueName, handle)`  | `DeleteMessageCommand`      | Deletes a message by receipt handle          |
+| Method                                          | AWS SDK Command             | Description                                    |
+|-------------------------------------------------|-----------------------------|------------------------------------------------|
+| `getQueueUrl(name)`                             | `GetQueueUrlCommand`        | Resolves queue name to URL                     |
+| `listQueues()`                                  | `ListQueuesCommand`         | Returns all queues                             |
+| `createQueue(name)`                             | `CreateQueueCommand`        | Creates a new queue                            |
+| `deleteQueue(queueUrl)`                         | `DeleteQueueCommand`        | Deletes a queue                                |
+| `purgeQueue(queueUrl)`                          | `PurgeQueueCommand`         | Removes all messages from a queue              |
+| `getQueueDetail(queueName)`                     | `GetQueueAttributesCommand` | Returns all queue attributes                   |
+| `sendMessage(name, body, delay?, attrs?)`       | `SendMessageCommand`        | Sends a message with optional delay/attributes |
+| `receiveMessages(name, max?, wait?, signal?)`   | `ReceiveMessageCommand`     | Long-polls for messages, supports AbortSignal  |
+| `deleteMessage(name, receiptHandle)`            | `DeleteMessageCommand`      | Deletes a message by receipt handle            |
 
-The service resolves queue names to queue URLs internally using `GetQueueUrlCommand` before operations that require a URL.
+The `receiveMessages` method accepts an optional `AbortSignal` parameter. When the signal fires (client disconnect), the in-flight `ReceiveMessageCommand` is aborted immediately via the AWS SDK's `{ abortSignal }` option. Defaults: `maxMessages=1`, `waitTimeSeconds=20`.
 
 ## Frontend Components
 
 The SQS frontend is in `packages/frontend/src/components/sqs/` and `packages/frontend/src/routes/sqs/`.
 
-| Component          | Description                                                        |
-|--------------------|--------------------------------------------------------------------|
-| `QueueList`        | Table of queues with search, create, and delete actions            |
-| `QueueCreateDialog`| Modal dialog for naming and creating a new queue                   |
-| `QueueDetail`      | Queue detail view: attributes panel, message list, and send form   |
-| `SendMessageForm`  | Form for composing and sending messages (body, delay, attributes)  |
-| `MessageViewer`    | Displays received messages with receipt handle and attribute details|
+| Component              | Description                                                            |
+|------------------------|------------------------------------------------------------------------|
+| `QueueList`            | Table of queues with search, create dialog, and delete with confirmation |
+| `QueueCreateDialog`    | Modal dialog for creating a new queue                                  |
+| `QueueDetail`          | Tabbed view: Attributes, Send Message, Messages. Includes purge action |
+| `SendMessageForm`      | Message body (textarea or Monaco JSON editor), delay, message attributes |
+| `MessageViewer`        | Receive messages with Single Poll / Continuous modes and long polling   |
 
 ### Routes
 
-| Route                  | Component     | Description                            |
-|------------------------|---------------|----------------------------------------|
-| `/sqs`                 | `QueueList`   | List and manage queues                 |
-| `/sqs/:queueName`      | `QueueDetail` | View queue details and manage messages |
+| Route                | Component       | Description                      |
+|----------------------|-----------------|----------------------------------|
+| `/sqs`               | `QueueList`     | List and manage queues           |
+| `/sqs/:queueName`    | `QueueDetail`   | Queue detail with tabbed view    |
+
+### QueueDetail Tabs
+
+| Tab          | Description                                                      |
+|--------------|------------------------------------------------------------------|
+| Attributes   | Queue configuration and message count metrics                    |
+| Send Message | Compose and send messages with optional JSON editor              |
+| Messages     | Receive, view, and delete messages with configurable polling     |
+
+### MessageViewer -- Receive Modes
+
+| Mode        | Trigger        | Behavior                                                     |
+|-------------|----------------|--------------------------------------------------------------|
+| Single Poll | "Poll" button  | One long-poll request; results **replace** previous messages |
+| Continuous  | "Start"/"Stop" | Loops long-poll requests; results **accumulate**             |
+
+Both modes support immediate abort via the "Stop" button, which cancels the in-flight HTTP request and propagates the abort to the backend.
+
+**Configuration controls:**
+
+- **Mode switch**: Toggle between Single Poll and Continuous
+- **Max Messages** (1--10, default 1): How many messages to retrieve per poll
+- **Wait Time** (1, 2, 5, 10, 15, 20 seconds, default 20): Long-poll duration per request
+
+### SendMessageForm -- JSON Editor
+
+The send form includes an optional JSON editor, toggled via a switch:
+
+- **Monaco Editor** loaded lazily (`React.lazy` + `Suspense`) to keep the initial bundle small (~3 MB loaded on demand)
+- **Real-time validation**: JSON syntax errors shown inline; Send button disabled on invalid JSON
+- **Format button**: pretty-prints the JSON in the editor (indented with 2 spaces)
+- **Minification on send**: JSON is minified (`JSON.stringify(JSON.parse(body))`) before being sent to the backend
+- **Toggle protection**: switching to JSON mode is blocked if the current textarea content is not valid JSON
 
 ### React Query Hooks
 
 All hooks are in `packages/frontend/src/api/sqs.ts`:
 
-| Hook                           | Type     | Query Key                                    |
-|--------------------------------|----------|----------------------------------------------|
-| `useListQueues()`              | Query    | `["sqs", "queues"]`                          |
-| `useQueueAttributes(name)`     | Query    | `["sqs", "attributes", queueName]`           |
-| `useReceiveMessages(name, opts)`| Query   | `["sqs", "messages", queueName, options]`    |
-| `useCreateQueue()`             | Mutation | Invalidates `["sqs", "queues"]`              |
-| `useDeleteQueue()`             | Mutation | Invalidates `["sqs", "queues"]`              |
-| `usePurgeQueue()`              | Mutation | Invalidates `["sqs", "messages", ...]` and `["sqs", "attributes", ...]` |
-| `useSendMessage(queueName)`    | Mutation | Invalidates `["sqs", "messages", ...]` and `["sqs", "attributes", ...]` |
-| `useDeleteMessage(queueName)`  | Mutation | Invalidates `["sqs", "messages", ...]` and `["sqs", "attributes", ...]` |
+| Hook / Function              | Type     | Query Key / Notes                                    |
+|------------------------------|----------|------------------------------------------------------|
+| `useListQueues()`            | Query    | `["sqs", "queues"]`                                  |
+| `useQueueAttributes(name)`   | Query    | `["sqs", "attributes", queueName]`                   |
+| `useReceiveMessages(name)`   | Query    | `["sqs", "messages", queueName]`                     |
+| `receiveMessagesPoll(...)`   | Function | Plain async; supports `AbortSignal` for cancellation |
+| `useCreateQueue()`           | Mutation | Invalidates `["sqs", "queues"]`                      |
+| `useDeleteQueue()`           | Mutation | Invalidates `["sqs", "queues"]`                      |
+| `usePurgeQueue()`            | Mutation | Invalidates messages + attributes                    |
+| `useSendMessage(name)`       | Mutation | Invalidates messages + attributes                    |
+| `useDeleteMessage(name)`     | Mutation | Invalidates messages + attributes                    |
+
+`receiveMessagesPoll()` is a plain async function (not a React Query hook) to allow manual control over the polling loop and abort behavior. It accepts an optional `AbortSignal` parameter.
 
 Mutations automatically invalidate the relevant query cache, so the UI refreshes after every create, delete, send, or purge operation.
 
-## FIFO Queues — Planned for Future Release
+## FIFO Queues -- Planned
 
 FIFO (First-In-First-Out) queues are not yet supported. The codebase includes `TODO` markers in the relevant places to guide future implementation. When added, the following will be required:
 
@@ -306,5 +284,3 @@ FIFO (First-In-First-Out) queues are not yet supported. The codebase includes `T
 - Queue attributes: surface `FifoQueue` and `ContentBasedDeduplication`
 - Send message: support `MessageGroupId` (required) and `MessageDeduplicationId` (optional)
 - Receive message: return `SequenceNumber` for ordering guarantees
-
-Until FIFO support is available, only standard queues can be created through the explorer.

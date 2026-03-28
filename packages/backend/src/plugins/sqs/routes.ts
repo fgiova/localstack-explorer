@@ -132,7 +132,7 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
         maxMessages?: number;
         waitTimeSeconds?: number;
       };
-      const messages = await sqsService.receiveMessages(queueName, maxMessages, waitTimeSeconds);
+      const messages = await sqsService.receiveMessages(queueName, maxMessages, waitTimeSeconds, request.signal);
       return { messages };
     },
   });

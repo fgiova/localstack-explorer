@@ -92,7 +92,7 @@ export function useQueueAttributes(queueName: string) {
 export function useReceiveMessages(queueName: string, options?: ReceiveMessagesOptions) {
   const params: Record<string, string> = {};
   if (options?.maxNumberOfMessages !== undefined) {
-    params.maxNumberOfMessages = String(options.maxNumberOfMessages);
+    params.maxMessages = String(options.maxNumberOfMessages);
   }
   if (options?.visibilityTimeout !== undefined) {
     params.visibilityTimeout = String(options.visibilityTimeout);
@@ -155,6 +155,23 @@ export function useSendMessage(queueName: string) {
       queryClient.invalidateQueries({ queryKey: ["sqs", "attributes", queueName] });
     },
   });
+}
+
+export async function receiveMessagesPoll(
+  queueName: string,
+  maxMessages: number,
+  waitTimeSeconds: number,
+  signal?: AbortSignal
+): Promise<ReceiveMessagesResponse> {
+  const url = new URL(`/api/sqs/${queueName}/messages`, window.location.origin);
+  url.searchParams.set("maxMessages", String(maxMessages));
+  url.searchParams.set("waitTimeSeconds", String(waitTimeSeconds));
+  const response = await fetch(url.toString(), { signal });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: "Request failed" }));
+    throw new Error(body.message ?? "Request failed");
+  }
+  return response.json() as Promise<ReceiveMessagesResponse>;
 }
 
 export function useDeleteMessage(queueName: string) {
