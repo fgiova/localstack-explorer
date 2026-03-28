@@ -1,5 +1,5 @@
 import {
-  CloudFormationClient,
+  type CloudFormationClient,
   ListStacksCommand,
   DescribeStacksCommand,
   CreateStackCommand,

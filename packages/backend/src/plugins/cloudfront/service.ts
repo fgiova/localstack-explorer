@@ -1,5 +1,5 @@
 import {
-  CloudFrontClient,
+  type CloudFrontClient,
   ListDistributionsCommand,
   GetDistributionCommand,
   CreateDistributionCommand,

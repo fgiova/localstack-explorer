@@ -326,17 +326,17 @@ function AccessKeysTab({ userName }: { userName: string }) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 Access Key ID
-              </label>
+              </span>
               <p className="font-mono text-sm mt-1">
                 {showCreateResult?.accessKeyId}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 Secret Access Key
-              </label>
+              </span>
               <div className="flex items-center gap-2 mt-1">
                 <code className="flex-1 rounded bg-muted p-2 font-mono text-sm break-all">
                   {showCreateResult?.secretAccessKey}
@@ -514,8 +514,9 @@ function InlinePoliciesTab({ userName }: { userName: string }) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Policy Name</label>
+              <label className="text-sm font-medium" htmlFor="inline-policy-name">Policy Name</label>
               <Input
+                id="inline-policy-name"
                 value={newPolicyName}
                 onChange={(e) => setNewPolicyName(e.target.value)}
                 placeholder="Enter policy name"
@@ -523,7 +524,7 @@ function InlinePoliciesTab({ userName }: { userName: string }) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Policy Document</label>
+              <span className="text-sm font-medium">Policy Document</span>
               <div className="mt-1 rounded border">
                 <Suspense
                   fallback={

@@ -53,8 +53,9 @@ export function ObjectUploadDialog({ bucketName, prefix, open, onOpenChange }: O
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
-            <div
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors hover:border-primary"
+            <button
+              type="button"
+              className="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-transparent p-8 transition-colors hover:border-primary"
               onClick={() => fileInputRef.current?.click()}
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
@@ -74,10 +75,11 @@ export function ObjectUploadDialog({ bucketName, prefix, open, onOpenChange }: O
                 className="hidden"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
-            </div>
+            </button>
             <div>
-              <label className="text-sm font-medium">Object key (optional)</label>
+              <label className="text-sm font-medium" htmlFor="object-key-input">Object key (optional)</label>
               <Input
+                id="object-key-input"
                 placeholder={file ? `${prefix}${file.name}` : "custom/path/filename.ext"}
                 value={customKey}
                 onChange={(e) => setCustomKey(e.target.value)}

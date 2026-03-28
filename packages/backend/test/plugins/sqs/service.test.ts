@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SQSClient } from "@aws-sdk/client-sqs";
+import type { SQSClient } from "@aws-sdk/client-sqs";
 import { SQSService } from "../../../src/plugins/sqs/service.js";
 import { AppError } from "../../../src/shared/errors.js";
 

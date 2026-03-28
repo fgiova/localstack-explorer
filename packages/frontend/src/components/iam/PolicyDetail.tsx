@@ -39,7 +39,7 @@ import {
   useCreatePolicyVersion,
   useDeletePolicyVersion,
   useSetDefaultPolicyVersion,
-  useDeletePolicy,
+  type ManagedPolicyDetail,
 } from "@/api/iam";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
@@ -104,7 +104,7 @@ export function PolicyDetail({ policyArn }: PolicyDetailProps) {
   );
 }
 
-function InfoTab({ policy }: { policy: any }) {
+function InfoTab({ policy }: { policy: ManagedPolicyDetail | undefined }) {
   return (
     <Card className="mt-4">
       <CardHeader>

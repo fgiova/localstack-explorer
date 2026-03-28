@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { S3Service } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { S3Service } from "./service.js";
 import {
   BucketListResponseSchema,
   CreateBucketBodySchema,

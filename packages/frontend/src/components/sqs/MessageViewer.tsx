@@ -66,8 +66,8 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
     try {
       const result = await receiveMessagesPoll(
         queueName,
-        parseInt(maxMessages),
-        parseInt(waitTimeSeconds),
+        parseInt(maxMessages, 10),
+        parseInt(waitTimeSeconds, 10),
         controller.signal
       );
       setMessages(result.messages);
@@ -93,8 +93,8 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
       try {
         const result = await receiveMessagesPoll(
           queueName,
-          parseInt(maxMessages),
-          parseInt(waitTimeSeconds),
+          parseInt(maxMessages, 10),
+          parseInt(waitTimeSeconds, 10),
           controller.signal
         );
         if (!pollingRef.current) break;
@@ -169,9 +169,9 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
             disabled={isPolling}
             className="w-[70px]"
           >
-            {Array.from({ length: 10 }, (_, i) => (
-              <option key={i + 1} value={String(i + 1)}>
-                {i + 1}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <option key={n} value={String(n)}>
+                {n}
               </option>
             ))}
           </Select>
@@ -255,14 +255,14 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
       )}
 
       {/* Messages */}
-      {messages.map((message, index) => {
+      {messages.map((message) => {
         const { isJson, content } = formatBody(message.body);
         const hasAttributes =
           message.messageAttributes &&
           Object.keys(message.messageAttributes).length > 0;
 
         return (
-          <Card key={`${message.messageId}-${index}`}>
+          <Card key={message.messageId}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-mono text-muted-foreground break-all">
                 ID: {message.messageId}
@@ -291,7 +291,7 @@ export function MessageViewer({ queueName }: MessageViewerProps) {
                     Message Attributes
                   </p>
                   <div className="space-y-1">
-                    {Object.entries(message.messageAttributes!).map(
+                    {Object.entries(message.messageAttributes ?? {}).map(
                       ([key, attr]) => (
                         <div
                           key={key}

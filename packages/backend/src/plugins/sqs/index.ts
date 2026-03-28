@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createSQSClient } from "../../aws/clients.js";
 import { SQSService } from "./service.js";
 import { sqsRoutes } from "./routes.js";

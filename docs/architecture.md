@@ -55,6 +55,7 @@ Every AWS service is encapsulated as a **Fastify plugin** under `src/plugins/`. 
 - **Isolation**: Each service has its own routes, schemas, and business logic
 - **Encapsulation**: Plugins can register their own middleware (e.g., S3 registers `@fastify/multipart`)
 - **Independent lifecycle**: Plugins can be added or removed without affecting others
+- **Selective enablement**: The `ENABLED_SERVICES` configuration controls which plugins are loaded at startup via autoload's `matchFilter`. Disabled services are not registered at all — no routes, no overhead
 
 ```
 src/
@@ -123,6 +124,8 @@ The `AppError` class is used throughout services to throw domain-specific errors
 ### Configuration
 
 Environment variables are validated at startup using [env-schema](https://github.com/fastify/env-schema) with `.env` file support (via dotenv). Invalid or missing required variables cause an immediate startup failure with a clear error message.
+
+The `ENABLED_SERVICES` variable controls which service plugins are loaded. The `config.ts` module parses the comma-separated value into a typed array of `ServiceName` values, which is then used by `index.ts` to build a `matchFilter` for `@fastify/autoload`. A dedicated endpoint (`GET /api/services`) exposes the enabled list so the frontend can adapt its UI.
 
 ### AWS Client Configuration
 

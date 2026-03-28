@@ -111,7 +111,7 @@ describe("MessageViewer", () => {
     const preElement = document.querySelector("pre");
     expect(preElement).toBeInTheDocument();
     const prettyJson = JSON.stringify({ key: "value", count: 42 }, null, 2);
-    expect(preElement!.textContent).toBe(prettyJson);
+    expect(preElement?.textContent).toBe(prettyJson);
   });
 
   it("should render non-JSON body as plain text", async () => {

@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createCloudFrontClient } from "../../aws/clients.js";
 import { CloudFrontService } from "./service.js";
 import { cloudfrontRoutes } from "./routes.js";

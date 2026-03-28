@@ -1,5 +1,5 @@
 import multipart from "@fastify/multipart";
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createS3Client } from "../../aws/clients.js";
 import { S3Service } from "./service.js";
 import { s3Routes } from "./routes.js";

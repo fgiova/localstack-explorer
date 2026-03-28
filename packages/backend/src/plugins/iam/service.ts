@@ -1,5 +1,5 @@
 import {
-  IAMClient,
+  type IAMClient,
   ListUsersCommand,
   CreateUserCommand,
   GetUserCommand,

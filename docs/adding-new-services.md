@@ -177,7 +177,23 @@ export function createLambdaClient(): LambdaClient {
 
 No manual plugin registration is needed — `@fastify/autoload` discovers the new `plugins/lambda/` folder automatically and registers it with prefix `/api/lambda`.
 
-## Step 3: Install SDK Dependency
+## Step 3: Register the Service Name
+
+Add the service name to the `ALL_SERVICES` array in `packages/backend/src/config.ts`:
+
+```typescript
+const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudfront", "cloudformation", "lambda"] as const;
+```
+
+Then update the default value of `ENABLED_SERVICES` in the config schema if the new service should be enabled by default:
+
+```typescript
+ENABLED_SERVICES: Type.String({ default: "s3,sqs,sns,iam,cloudformation,lambda" }),
+```
+
+This ensures the service is recognized by the selective enablement system. Without this step, the service will be filtered out by the `matchFilter` and its routes will not be registered.
+
+## Step 4: Install SDK Dependency
 
 If the new service requires an AWS SDK package not already installed:
 
@@ -185,7 +201,7 @@ If the new service requires an AWS SDK package not already installed:
 pnpm --filter @localstack-explorer/backend add @aws-sdk/client-lambda
 ```
 
-## Step 4: Frontend — API Hooks
+## Step 5: Frontend — API Hooks
 
 Create `packages/frontend/src/api/lambda.ts`:
 
@@ -223,7 +239,7 @@ export function useDeleteFunction() {
 }
 ```
 
-## Step 5: Frontend — Component and Route
+## Step 6: Frontend — Component and Route
 
 Create the component in `packages/frontend/src/components/lambda/FunctionList.tsx`:
 
@@ -249,20 +265,26 @@ function LambdaPage() {
 
 The TanStack Router plugin will automatically pick up the new route file and regenerate `routeTree.gen.ts`.
 
-## Step 6: Add to Sidebar
+## Step 7: Add to Sidebar and Dashboard
 
-Edit `packages/frontend/src/components/layout/Sidebar.tsx` and add an entry to the `services` array:
+Edit `packages/frontend/src/components/layout/Sidebar.tsx` and add an entry to the `services` array. The `key` field must match the service name in `ALL_SERVICES` (used for selective enablement filtering):
 
 ```typescript
 import { Code } from "lucide-react";  // or any appropriate icon
 
 const services = [
   // ...existing services
-  { name: "Lambda", path: "/lambda", icon: Code, description: "Functions" },
+  { name: "Lambda", key: "lambda", path: "/lambda", icon: Code, description: "Functions" },
 ];
 ```
 
-Also add the same entry to the dashboard in `packages/frontend/src/routes/index.tsx`.
+Also add the same entry (with `key` and additional dashboard fields) to the `services` array in `packages/frontend/src/routes/index.tsx`:
+
+```typescript
+{ name: "Lambda", key: "lambda", path: "/lambda", icon: Code, description: "Serverless Functions — Manage Lambda functions", color: "text-yellow-600" },
+```
+
+The `key` field is critical: the frontend fetches the list of enabled services from `GET /api/services` and uses it to filter which service cards and sidebar entries are visible.
 
 ## Checklist
 
@@ -271,10 +293,12 @@ Also add the same entry to the dashboard in `packages/frontend/src/routes/index.
 - [ ] Backend: `routes.ts` with Fastify route definitions and validation
 - [ ] Backend: `index.ts` plugin entry point (default export async function, **no** `fastify-plugin` wrapper)
 - [ ] Backend: Client factory in `aws/clients.ts`
+- [ ] Backend: Service name added to `ALL_SERVICES` in `config.ts`
+- [ ] Backend: Default `ENABLED_SERVICES` updated if needed
 - [ ] Frontend: API hooks in `src/api/<service>.ts`
 - [ ] Frontend: Component(s) in `src/components/<service>/`
 - [ ] Frontend: Route file in `src/routes/<service>/index.tsx`
-- [ ] Frontend: Added to Sidebar and Dashboard
+- [ ] Frontend: Added to Sidebar and Dashboard (with `key` field matching service name)
 - [ ] Dependencies: Any new `@aws-sdk/client-*` packages installed
 
 ## Reference

@@ -11,7 +11,7 @@ import {
 import { useRouterState } from "@tanstack/react-router";
 
 export function Header() {
-  const { toggleSidebar, sidebarOpen } = useAppStore();
+  const { toggleSidebar } = useAppStore();
   const routerState = useRouterState();
   const pathSegments = routerState.location.pathname.split("/").filter(Boolean);
 

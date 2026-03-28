@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { SQSService } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { SQSService } from "./service.js";
 import {
   QueueListResponseSchema,
   CreateQueueBodySchema,

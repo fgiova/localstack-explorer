@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { SNSService } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { SNSService } from "./service.js";
 import {
   TopicListResponseSchema,
   CreateTopicBodySchema,

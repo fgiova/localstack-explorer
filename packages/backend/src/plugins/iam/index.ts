@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createIAMClient } from "../../aws/clients.js";
 import { IAMService } from "./service.js";
 import { iamRoutes } from "./routes.js";

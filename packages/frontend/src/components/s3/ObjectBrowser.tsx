@@ -18,7 +18,7 @@ function formatBytes(bytes: number | undefined): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 interface ObjectBrowserProps {
@@ -42,7 +42,7 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
   const navigateUp = () => {
     const parts = prefix.split("/").filter(Boolean);
     parts.pop();
-    setPrefix(parts.length > 0 ? parts.join("/") + "/" : "");
+    setPrefix(parts.length > 0 ? `${parts.join("/")}/` : "");
   };
 
   if (isLoading) {
@@ -77,12 +77,12 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {pathParts.map((part, index) => (
-                <BreadcrumbItem key={part + index}>
+                <BreadcrumbItem key={pathParts.slice(0, index + 1).join("/")}>
                   <BreadcrumbSeparator />
                   <BreadcrumbLink
                     className="cursor-pointer"
                     onClick={() =>
-                      setPrefix(pathParts.slice(0, index + 1).join("/") + "/")
+                      setPrefix(`${pathParts.slice(0, index + 1).join("/")}/`)
                     }
                   >
                     {part}

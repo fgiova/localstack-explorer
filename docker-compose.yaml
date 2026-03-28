@@ -4,7 +4,7 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation
+      - SERVICES=${ENABLED_SERVICES:-s3,sqs,sns,iam,cloudfront,cloudformation}
       - DEBUG=0
       - EAGER_SERVICE_LOADING=1
     volumes:

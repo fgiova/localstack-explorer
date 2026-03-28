@@ -297,7 +297,7 @@ export function DistributionList() {
                 </Button>
               </div>
               {form.origins.map((origin, index) => (
-                <div key={index} className="space-y-3 rounded-md border p-4">
+                <div key={`origin-${origin.domainName || index}`} className="space-y-3 rounded-md border p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Origin {index + 1}</span>
                     {form.origins.length > 1 && (

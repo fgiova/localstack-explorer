@@ -17,9 +17,12 @@ interface StackUpdateDialogProps {
 }
 
 interface ParameterEntry {
+  id: number;
   key: string;
   value: string;
 }
+
+let nextParamId = 0;
 
 function tryExtractParameters(templateBody: string): string[] {
   try {
@@ -93,6 +96,7 @@ export function StackUpdateDialog({ open, onOpenChange, stackName }: StackUpdate
       if (stackData?.parameters && stackData.parameters.length > 0) {
         setParameters(
           stackData.parameters.map((p) => ({
+            id: nextParamId++,
             key: p.parameterKey ?? "",
             value: p.parameterValue ?? "",
           }))
@@ -117,7 +121,7 @@ export function StackUpdateDialog({ open, onOpenChange, stackName }: StackUpdate
         const merged = [...prev];
         for (const name of paramNames) {
           if (!existingKeys.has(name)) {
-            merged.push({ key: name, value: "" });
+            merged.push({ id: nextParamId++, key: name, value: "" });
           }
         }
         return merged;
@@ -126,7 +130,7 @@ export function StackUpdateDialog({ open, onOpenChange, stackName }: StackUpdate
   }, []);
 
   const addParameter = () => {
-    setParameters((prev) => [...prev, { key: "", value: "" }]);
+    setParameters((prev) => [...prev, { id: nextParamId++, key: "", value: "" }]);
   };
 
   const removeParameter = (index: number) => {
@@ -234,7 +238,7 @@ export function StackUpdateDialog({ open, onOpenChange, stackName }: StackUpdate
               {parameters.length > 0 && (
                 <div className="space-y-2">
                   {parameters.map((param, index) => (
-                    <div key={index} className="flex items-center gap-2">
+                    <div key={param.id} className="flex items-center gap-2">
                       <Input
                         placeholder="Parameter key"
                         value={param.key}

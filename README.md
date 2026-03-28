@@ -75,12 +75,34 @@ pnpm test
 
 The backend uses [env-schema](https://github.com/fastify/env-schema) for environment variable validation with `.env` file support.
 
-| Variable              | Default                   | Description              |
-|-----------------------|---------------------------|--------------------------|
-| `PORT`                | `3001`                    | Backend server port      |
-| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`   | LocalStack endpoint URL  |
+| Variable              | Default                          | Description                              |
+|-----------------------|----------------------------------|------------------------------------------|
+| `PORT`                | `3001`                           | Backend server port                      |
+| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | LocalStack endpoint URL                  |
+| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation`  | Comma-separated list of enabled services |
 
 Create a `.env` file in `packages/backend/` to override defaults.
+
+### Selective Service Enablement
+
+By default, only a subset of services is enabled. You can control which services are available by setting the `ENABLED_SERVICES` environment variable to a comma-separated list of service names:
+
+```bash
+# Enable only S3 and SQS
+ENABLED_SERVICES=s3,sqs
+
+# Enable all available services
+ENABLED_SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation
+```
+
+Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront`, `cloudformation`.
+
+When a service is disabled:
+- Its backend API routes are **not registered** (requests return 404)
+- Its card is **hidden** from the dashboard
+- Its entry is **removed** from the sidebar navigation
+
+The frontend fetches the list of enabled services from the `GET /api/services` endpoint at startup and filters the UI accordingly.
 
 ## Project Structure
 

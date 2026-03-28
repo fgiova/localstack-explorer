@@ -1,14 +1,27 @@
 {
-  "name": "localstack-explorer",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "pnpm -r --parallel run dev",
-    "build": "pnpm -r run build",
-    "test": "pnpm -r run test"
-  },
-  "packageManager": "pnpm@9.15.4",
-  "engines": {
-    "node": ">=20"
-  }
+	"name": "localstack-explorer",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "pnpm -r --parallel run dev",
+		"build": "pnpm -r run build",
+		"test": "pnpm -r run test",
+		"check": "biome check",
+		"check:fix": "biome check --fix",
+		"format": "biome format",
+		"format:fix": "biome format --fix",
+		"lint": "biome lint",
+		"lint:fix": "biome lint --fix"
+	},
+	"packageManager": "pnpm@9.15.4",
+	"engines": {
+		"node": ">=20"
+	},
+	"workspaces": [
+		"packages/backend",
+		"packages/frontend"
+	],
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.9"
+	}
 }

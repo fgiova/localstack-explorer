@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { CloudFormationService } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { CloudFormationService } from "./service.js";
 import {
   StackListResponseSchema,
   StackDetailSchema,

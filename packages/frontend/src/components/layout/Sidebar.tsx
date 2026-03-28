@@ -4,20 +4,27 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useEnabledServices } from "@/api/services";
 
 const services = [
-  { name: "S3", path: "/s3", icon: HardDrive, description: "Object Storage" },
-  { name: "SQS", path: "/sqs", icon: MessageSquare, description: "Message Queue" },
-  { name: "SNS", path: "/sns", icon: Bell, description: "Notifications" },
-  { name: "IAM", path: "/iam", icon: Shield, description: "Identity & Access" },
-  { name: "CloudFront", path: "/cloudfront", icon: Globe, description: "CDN" },
-  { name: "CloudFormation", path: "/cloudformation", icon: Layers, description: "Infrastructure as Code" },
+  { name: "S3", key: "s3", path: "/s3", icon: HardDrive, description: "Object Storage" },
+  { name: "SQS", key: "sqs", path: "/sqs", icon: MessageSquare, description: "Message Queue" },
+  { name: "SNS", key: "sns", path: "/sns", icon: Bell, description: "Notifications" },
+  { name: "IAM", key: "iam", path: "/iam", icon: Shield, description: "Identity & Access" },
+  { name: "CloudFront", key: "cloudfront", path: "/cloudfront", icon: Globe, description: "CDN" },
+  { name: "CloudFormation", key: "cloudformation", path: "/cloudformation", icon: Layers, description: "Infrastructure as Code" },
 ];
 
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useAppStore();
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
+  const { data } = useEnabledServices();
+  const enabledSet = data ? new Set(data.services) : null;
+
+  const visibleServices = enabledSet
+    ? services.filter((s) => enabledSet.has(s.key))
+    : services;
 
   return (
     <aside
@@ -36,7 +43,7 @@ export function Sidebar() {
       </div>
       <Separator />
       <nav className="space-y-1 p-2">
-        {services.map((service) => {
+        {visibleServices.map((service) => {
           const isActive = currentPath.startsWith(service.path);
           return (
             <Link

@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createCloudFormationClient } from "../../aws/clients.js";
 import { CloudFormationService } from "./service.js";
 import { cloudformationRoutes } from "./routes.js";

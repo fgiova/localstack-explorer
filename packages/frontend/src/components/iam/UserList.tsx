@@ -13,7 +13,7 @@ import { CreateUserDialog } from "./CreateUserDialog";
 
 function truncateArn(arn: string, maxLength = 50): string {
   if (arn.length <= maxLength) return arn;
-  return arn.slice(0, maxLength - 3) + "...";
+  return `${arn.slice(0, maxLength - 3)}...`;
 }
 
 export function UserList() {

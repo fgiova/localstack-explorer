@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { CloudFrontService } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { CloudFrontService } from "./service.js";
 import {
   DistributionListResponseSchema,
   DistributionDetailSchema,

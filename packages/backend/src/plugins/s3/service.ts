@@ -1,5 +1,5 @@
 import {
-  S3Client,
+  type S3Client,
   ListBucketsCommand,
   CreateBucketCommand,
   DeleteBucketCommand,

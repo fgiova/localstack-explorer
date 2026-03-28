@@ -200,7 +200,7 @@ describe("QueueList", () => {
     });
 
     const trashButton = document.querySelector("svg.text-destructive")?.closest("button");
-    fireEvent.click(trashButton!);
+    if (trashButton) fireEvent.click(trashButton);
 
     await waitFor(() => {
       expect(
@@ -226,7 +226,7 @@ describe("QueueList", () => {
     });
 
     const trashButton = document.querySelector("svg.text-destructive")?.closest("button");
-    fireEvent.click(trashButton!);
+    if (trashButton) fireEvent.click(trashButton);
 
     await waitFor(() => {
       expect(screen.getByText(/are you sure you want to delete queue/i)).toBeInTheDocument();

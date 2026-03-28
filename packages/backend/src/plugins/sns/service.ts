@@ -1,5 +1,5 @@
 import {
-  SNSClient,
+  type SNSClient,
   ListTopicsCommand,
   CreateTopicCommand,
   DeleteTopicCommand,

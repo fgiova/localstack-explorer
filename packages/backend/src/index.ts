@@ -25,16 +25,28 @@ async function main() {
   // Health check
   app.get("/api/health", async () => ({ status: "ok" }));
 
-  // Autoload service plugins from plugins directory
+  // Enabled services endpoint
+  app.get("/api/services", async () => ({
+    services: config.enabledServices,
+  }));
+
+  // Autoload service plugins from plugins directory (only enabled services)
+  const enabledSet = new Set<string>(config.enabledServices);
   await app.register(autoload, {
     dir: path.join(__dirname, "plugins"),
     dirNameRoutePrefix: true,
     options: { prefix: "/api" },
+    matchFilter: (pluginPath) => {
+      // pluginPath from autoload is like "/s3/index.ts" — extract top-level dir
+      const topDir = pluginPath.split("/")[1];
+      return enabledSet.has(topDir);
+    },
   });
 
   try {
     await app.listen({ port: config.port, host: "0.0.0.0" });
     app.log.info(`Server running on http://localhost:${config.port}`);
+    app.log.info(`Enabled services: ${config.enabledServices.join(", ")}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

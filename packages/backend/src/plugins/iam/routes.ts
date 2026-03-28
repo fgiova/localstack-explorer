@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify";
-import { IAMService } from "./service.js";
+import type { FastifyInstance } from "fastify";
+import type { IAMService } from "./service.js";
 import {
   UserListResponseSchema,
   CreateUserBodySchema,

@@ -11,25 +11,25 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudformation": "^3.1018.0",
-    "@aws-sdk/client-cloudfront": "^3",
-    "@aws-sdk/client-iam": "^3",
-    "@aws-sdk/client-s3": "^3",
-    "@aws-sdk/client-sns": "^3",
-    "@aws-sdk/client-sqs": "^3",
+    "@aws-sdk/client-cloudfront": "^3.1018.0",
+    "@aws-sdk/client-iam": "^3.1018.0",
+    "@aws-sdk/client-s3": "^3.1018.0",
+    "@aws-sdk/client-sns": "^3.1018.0",
+    "@aws-sdk/client-sqs": "^3.1018.0",
     "@aws-sdk/lib-storage": "^3",
-    "@aws-sdk/s3-request-presigner": "^3",
+    "@aws-sdk/s3-request-presigner": "^3.1018.0",
     "@fastify/autoload": "^6.3.1",
-    "@fastify/cors": "^10",
-    "@fastify/multipart": "^9",
+    "@fastify/cors": "^10.1.0",
+    "@fastify/multipart": "^9.4.0",
     "env-schema": "^7.0.0",
-    "fastify": "^5",
-    "fastify-plugin": "^5",
-    "typebox": "^1"
+    "fastify": "^5.8.4",
+    "fastify-plugin": "^5.1.0",
+    "typebox": "^1.1.7"
   },
   "devDependencies": {
-    "@types/node": "^22",
-    "tsx": "^4",
-    "typescript": "^5",
-    "vitest": "^3"
+    "@types/node": "^22.19.15",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

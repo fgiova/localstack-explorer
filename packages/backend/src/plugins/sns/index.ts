@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { createSNSClient } from "../../aws/clients.js";
 import { SNSService } from "./service.js";
 import { snsRoutes } from "./routes.js";

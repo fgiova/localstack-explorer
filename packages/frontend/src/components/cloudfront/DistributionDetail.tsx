@@ -318,8 +318,8 @@ export function DistributionDetail({ distributionId }: DistributionDetailProps) 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allBehaviors.map((behavior, idx) => (
-                        <TableRow key={behavior.pathPattern + idx}>
+                      {allBehaviors.map((behavior) => (
+                        <TableRow key={`${behavior.pathPattern}-${behavior.targetOriginId}`}>
                           <TableCell className="font-medium">
                             {behavior.pathPattern}
                             {behavior.pathPattern === "*" && (

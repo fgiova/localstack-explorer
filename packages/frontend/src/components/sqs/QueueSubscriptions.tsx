@@ -15,7 +15,7 @@ function extractTopicName(arn: string): string {
 
 function truncateArn(arn: string, maxLength = 40): string {
   if (arn.length <= maxLength) return arn;
-  return arn.slice(0, maxLength - 3) + "...";
+  return `${arn.slice(0, maxLength - 3)}...`;
 }
 
 export function QueueSubscriptions({ queueArn }: QueueSubscriptionsProps) {

@@ -1,5 +1,5 @@
 import {
-  SQSClient,
+  type SQSClient,
   ListQueuesCommand,
   CreateQueueCommand,
   DeleteQueueCommand,
