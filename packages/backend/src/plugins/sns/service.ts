@@ -8,6 +8,7 @@ import {
   SubscribeCommand,
   UnsubscribeCommand,
   ListSubscriptionsByTopicCommand,
+  ListSubscriptionsCommand,
   GetSubscriptionAttributesCommand,
   SetSubscriptionAttributesCommand,
   PublishCommand,
@@ -124,6 +125,24 @@ export class SNSService {
 
   // ── Subscription Operations ───────────────────────────────────────
 
+  async listAllSubscriptions() {
+    try {
+      const response = await this.client.send(
+        new ListSubscriptionsCommand({})
+      );
+      const subscriptions = (response.Subscriptions ?? []).map((sub) => ({
+        subscriptionArn: sub.SubscriptionArn ?? "",
+        owner: sub.Owner ?? "",
+        protocol: sub.Protocol ?? "",
+        endpoint: sub.Endpoint ?? "",
+        topicArn: sub.TopicArn ?? "",
+      }));
+      return { subscriptions };
+    } catch (err) {
+      mapSnsError(err, "Failed to list subscriptions");
+    }
+  }
+
   async listSubscriptionsByTopic(topicArn: string) {
     try {
       const response = await this.client.send(
@@ -145,7 +164,8 @@ export class SNSService {
   async createSubscription(
     topicArn: string,
     protocol: string,
-    endpoint: string
+    endpoint: string,
+    options?: { rawMessageDelivery?: boolean; filterPolicy?: string }
   ) {
     try {
       const response = await this.client.send(
@@ -155,6 +175,28 @@ export class SNSService {
           Endpoint: endpoint,
         })
       );
+
+      if (response.SubscriptionArn) {
+        if (options?.rawMessageDelivery) {
+          await this.client.send(
+            new SetSubscriptionAttributesCommand({
+              SubscriptionArn: response.SubscriptionArn,
+              AttributeName: "RawMessageDelivery",
+              AttributeValue: "true",
+            })
+          );
+        }
+        if (options?.filterPolicy) {
+          await this.client.send(
+            new SetSubscriptionAttributesCommand({
+              SubscriptionArn: response.SubscriptionArn,
+              AttributeName: "FilterPolicy",
+              AttributeValue: options.filterPolicy,
+            })
+          );
+        }
+      }
+
       return {
         message: "Subscription created successfully",
         subscriptionArn: response.SubscriptionArn,

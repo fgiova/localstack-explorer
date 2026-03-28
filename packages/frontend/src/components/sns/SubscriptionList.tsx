@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Plus, Trash2, Filter } from "lucide-react";
+import { Plus, Trash2, Filter, Eye } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useTopicSubscriptions, useDeleteSubscription } from "@/api/sns";
+import { useTopicSubscriptions, useDeleteSubscription, useSubscriptionAttributes } from "@/api/sns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,6 +46,7 @@ export function SubscriptionList({ topicName }: SubscriptionListProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [filterPolicyArn, setFilterPolicyArn] = useState<string | null>(null);
+  const [attributesArn, setAttributesArn] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -122,6 +123,14 @@ export function SubscriptionList({ topicName }: SubscriptionListProps) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        title="View Attributes"
+                        onClick={() => setAttributesArn(sub.subscriptionArn)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         title="Filter Policy"
                         onClick={() => setFilterPolicyArn(sub.subscriptionArn)}
                       >
@@ -158,6 +167,12 @@ export function SubscriptionList({ topicName }: SubscriptionListProps) {
         }}
       />
 
+      <SubscriptionAttributesDialog
+        subscriptionArn={attributesArn ?? ""}
+        open={!!attributesArn}
+        onOpenChange={(open) => { if (!open) setAttributesArn(null); }}
+      />
+
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
@@ -191,5 +206,63 @@ export function SubscriptionList({ topicName }: SubscriptionListProps) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function SubscriptionAttributesDialog({ subscriptionArn, open, onOpenChange }: { subscriptionArn: string; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { data, isLoading } = useSubscriptionAttributes(subscriptionArn);
+  const sub = data?.subscription;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Subscription Attributes</DialogTitle>
+          <DialogDescription>
+            Details for this subscription.
+          </DialogDescription>
+        </DialogHeader>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : sub ? (
+          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            {[
+              { label: "Subscription ARN", value: sub.subscriptionArn },
+              { label: "Topic ARN", value: sub.topicArn },
+              { label: "Protocol", value: sub.protocol },
+              { label: "Endpoint", value: sub.endpoint },
+              { label: "Owner", value: sub.owner },
+              { label: "Raw Message Delivery", value: sub.rawMessageDelivery ? "Yes" : "No" },
+              { label: "Confirmation Authenticated", value: sub.confirmationWasAuthenticated ? "Yes" : "No" },
+              { label: "Pending Confirmation", value: sub.pendingConfirmation ? "Yes" : "No" },
+              { label: "Filter Policy Scope", value: sub.filterPolicyScope },
+              { label: "Filter Policy", value: sub.filterPolicy, isJson: true },
+              { label: "Delivery Policy", value: sub.deliveryPolicy, isJson: true },
+              { label: "Effective Delivery Policy", value: sub.effectiveDeliveryPolicy, isJson: true },
+            ].map(({ label, value, isJson }) => (
+              <div key={label} className="flex flex-col gap-1 rounded-lg border p-3">
+                <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                {isJson && value ? (
+                  <pre className="text-sm font-mono whitespace-pre-wrap break-all">
+                    {(() => { try { return JSON.stringify(JSON.parse(value as string), null, 2); } catch { return String(value); } })()}
+                  </pre>
+                ) : (
+                  <span className="text-sm font-semibold break-all">
+                    {value !== undefined && value !== "" ? String(value) : "\u2014"}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-4 text-center text-muted-foreground">No data available</div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

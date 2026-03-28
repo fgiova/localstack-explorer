@@ -7,6 +7,7 @@ import {
   TopicDetailResponseSchema,
   SetAttributeBodySchema,
   SubscriptionListResponseSchema,
+  SubscriptionsByEndpointQuerySchema,
   CreateSubscriptionBodySchema,
   SubscriptionArnParamsSchema,
   SubscriptionDetailResponseSchema,
@@ -119,6 +120,25 @@ export async function snsRoutes(app: FastifyInstance, opts: { snsService: SNSSer
 
   // ── Subscription Routes ─────────────────────────────────────────────
 
+  // List subscriptions by endpoint
+  app.get("/subscriptions/by-endpoint", {
+    schema: {
+      querystring: SubscriptionsByEndpointQuerySchema,
+      response: {
+        200: SubscriptionListResponseSchema,
+        501: ErrorResponseSchema,
+      },
+    },
+    handler: async (request) => {
+      const { endpoint } = request.query as { endpoint: string };
+      const result = await snsService.listAllSubscriptions();
+      const filtered = (result?.subscriptions ?? []).filter(
+        (sub) => sub.endpoint === endpoint
+      );
+      return { subscriptions: filtered };
+    },
+  });
+
   // List subscriptions by topic
   app.get("/:topicName/subscriptions", {
     schema: {
@@ -148,12 +168,20 @@ export async function snsRoutes(app: FastifyInstance, opts: { snsService: SNSSer
     },
     handler: async (request, reply) => {
       const { topicName } = request.params as { topicName: string };
-      const { protocol, endpoint } = request.body as {
+      const { protocol, endpoint, rawMessageDelivery, filterPolicy } = request.body as {
         protocol: string;
         endpoint: string;
+        rawMessageDelivery?: boolean;
+        filterPolicy?: string | Record<string, unknown>;
       };
       const topicArn = buildTopicArn(topicName);
-      const result = await snsService.createSubscription(topicArn, protocol, endpoint);
+      const filterPolicyString = filterPolicy
+        ? (typeof filterPolicy === "string" ? filterPolicy : JSON.stringify(filterPolicy))
+        : undefined;
+      const result = await snsService.createSubscription(topicArn, protocol, endpoint, {
+        rawMessageDelivery,
+        filterPolicy: filterPolicyString,
+      });
       return reply.status(201).send(result);
     },
   });

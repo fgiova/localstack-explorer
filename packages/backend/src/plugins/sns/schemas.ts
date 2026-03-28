@@ -71,6 +71,9 @@ export const SubscriptionDetailSchema = Type.Object({
   filterPolicyScope: Type.Optional(Type.String()),
   rawMessageDelivery: Type.Optional(Type.Boolean()),
   confirmationWasAuthenticated: Type.Optional(Type.Boolean()),
+  deliveryPolicy: Type.Optional(Type.String()),
+  effectiveDeliveryPolicy: Type.Optional(Type.String()),
+  pendingConfirmation: Type.Optional(Type.Boolean()),
 });
 export type SubscriptionDetail = Static<typeof SubscriptionDetailSchema>;
 
@@ -94,8 +97,15 @@ export const CreateSubscriptionBodySchema = Type.Object({
     Type.Literal("lambda"),
   ]),
   endpoint: Type.String(),
+  rawMessageDelivery: Type.Optional(Type.Boolean()),
+  filterPolicy: Type.Optional(Type.Union([Type.String(), Type.Record(Type.String(), Type.Any())])),
 });
 export type CreateSubscriptionBody = Static<typeof CreateSubscriptionBodySchema>;
+
+export const SubscriptionsByEndpointQuerySchema = Type.Object({
+  endpoint: Type.String(),
+});
+export type SubscriptionsByEndpointQuery = Static<typeof SubscriptionsByEndpointQuerySchema>;
 
 // --- Publish schemas ---
 

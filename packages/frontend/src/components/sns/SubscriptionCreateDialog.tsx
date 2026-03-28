@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,6 +34,9 @@ export function SubscriptionCreateDialog({ topicName, open, onOpenChange }: Subs
   const [endpoint, setEndpoint] = useState("");
   const [sqsMode, setSqsMode] = useState<"select" | "manual">("select");
   const [selectedQueue, setSelectedQueue] = useState("");
+  const [rawMessageDelivery, setRawMessageDelivery] = useState(false);
+  const [filterPolicy, setFilterPolicy] = useState("");
+  const [filterPolicyError, setFilterPolicyError] = useState<string | null>(null);
 
   const queues = queuesData?.queues ?? [];
 
@@ -41,6 +45,9 @@ export function SubscriptionCreateDialog({ topicName, open, onOpenChange }: Subs
     setEndpoint("");
     setSqsMode("select");
     setSelectedQueue("");
+    setRawMessageDelivery(false);
+    setFilterPolicy("");
+    setFilterPolicyError(null);
   }
 
   function getEndpointValue(): string {
@@ -65,8 +72,27 @@ export function SubscriptionCreateDialog({ topicName, open, onOpenChange }: Subs
     const endpointValue = getEndpointValue();
     if (!endpointValue) return;
 
+    // Validate filter policy JSON if provided
+    const trimmedPolicy = filterPolicy.trim();
+    if (trimmedPolicy) {
+      try {
+        JSON.parse(trimmedPolicy);
+        setFilterPolicyError(null);
+      } catch (err) {
+        setFilterPolicyError(err instanceof Error ? err.message : "Invalid JSON");
+        return;
+      }
+    }
+
+    const parsedPolicy = trimmedPolicy ? JSON.parse(trimmedPolicy) : undefined;
+
     createSubscription.mutate(
-      { protocol, endpoint: endpointValue },
+      {
+        protocol,
+        endpoint: endpointValue,
+        ...(rawMessageDelivery ? { rawMessageDelivery } : {}),
+        ...(parsedPolicy ? { filterPolicy: parsedPolicy } : {}),
+      },
       {
         onSuccess: () => {
           resetForm();
@@ -204,6 +230,42 @@ export function SubscriptionCreateDialog({ topicName, open, onOpenChange }: Subs
             <div className="space-y-2">
               <Label>Endpoint</Label>
               {renderEndpointInput()}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="rawMessageDelivery"
+                checked={rawMessageDelivery}
+                onChange={(e) => setRawMessageDelivery(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="rawMessageDelivery">Raw Message Delivery</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="filterPolicy">Filter Policy (JSON, optional)</Label>
+              <Textarea
+                id="filterPolicy"
+                value={filterPolicy}
+                onChange={(e) => {
+                  setFilterPolicy(e.target.value);
+                  if (filterPolicyError) {
+                    try {
+                      if (e.target.value.trim()) JSON.parse(e.target.value);
+                      setFilterPolicyError(null);
+                    } catch {
+                      // keep error until valid
+                    }
+                  }
+                }}
+                placeholder='{"attribute": ["value1", "value2"]}'
+                className="font-mono text-sm min-h-[100px]"
+                rows={5}
+              />
+              {filterPolicyError && (
+                <p className="text-sm text-destructive">{filterPolicyError}</p>
+              )}
             </div>
           </div>
 

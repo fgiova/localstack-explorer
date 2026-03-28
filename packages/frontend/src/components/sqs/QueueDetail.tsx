@@ -21,8 +21,9 @@ import { Badge } from "@/components/ui/badge";
 
 import { SendMessageForm } from "./SendMessageForm";
 import { MessageViewer } from "./MessageViewer";
+import { QueueSubscriptions } from "./QueueSubscriptions";
 
-type TabId = "attributes" | "send" | "messages";
+type TabId = "attributes" | "send" | "messages" | "subscriptions";
 
 interface AttributeItemProps {
   label: string;
@@ -86,6 +87,7 @@ export function QueueDetail({ queueName }: QueueDetailProps) {
     { id: "attributes", label: "Attributes" },
     { id: "send", label: "Send Message" },
     { id: "messages", label: "Messages" },
+    { id: "subscriptions", label: "Subscriptions" },
   ];
 
   return (
@@ -228,6 +230,11 @@ export function QueueDetail({ queueName }: QueueDetailProps) {
           {/* Tab: Messages */}
           {activeTab === "messages" && (
             <MessageViewer queueName={queueName} />
+          )}
+
+          {/* Tab: Subscriptions */}
+          {activeTab === "subscriptions" && attributes?.queueArn && (
+            <QueueSubscriptions queueArn={attributes.queueArn} />
           )}
         </>
       )}

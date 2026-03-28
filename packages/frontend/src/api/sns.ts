@@ -49,6 +49,9 @@ interface SubscriptionDetail {
   filterPolicyScope?: string;
   rawMessageDelivery?: boolean;
   confirmationWasAuthenticated?: boolean;
+  deliveryPolicy?: string;
+  effectiveDeliveryPolicy?: string;
+  pendingConfirmation?: boolean;
 }
 
 interface SubscriptionDetailResponse {
@@ -103,6 +106,8 @@ interface CreateTopicRequest {
 interface CreateSubscriptionRequest {
   protocol: string;
   endpoint: string;
+  rawMessageDelivery?: boolean;
+  filterPolicy?: string | Record<string, unknown>;
 }
 
 interface SetAttributeRequest {

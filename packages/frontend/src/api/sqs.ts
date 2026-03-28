@@ -109,6 +109,31 @@ export function useReceiveMessages(queueName: string, options?: ReceiveMessagesO
   });
 }
 
+// --- Subscription hooks ---
+
+interface QueueSubscription {
+  subscriptionArn: string;
+  topicArn: string;
+  protocol: string;
+  endpoint: string;
+}
+
+interface QueueSubscriptionsResponse {
+  subscriptions: QueueSubscription[];
+}
+
+export function useQueueSubscriptions(queueArn: string) {
+  return useQuery({
+    queryKey: ["sqs", "subscriptions", queueArn],
+    queryFn: () =>
+      apiClient.get<QueueSubscriptionsResponse>(
+        `/sns/subscriptions/by-endpoint`,
+        { endpoint: queueArn }
+      ),
+    enabled: !!queueArn,
+  });
+}
+
 // --- Mutation hooks ---
 
 export function useCreateQueue() {
