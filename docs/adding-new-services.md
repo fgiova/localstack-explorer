@@ -279,4 +279,4 @@ Also add the same entry to the dashboard in `packages/frontend/src/routes/index.
 
 ## Reference
 
-Use the [S3 plugin](../packages/backend/src/plugins/s3/) or the [SQS plugin](../packages/backend/src/plugins/sqs/) as reference implementations. Both are complete and follow the same four-file plugin structure (`index.ts`, `schemas.ts`, `service.ts`, `routes.ts`). Scaffold services (SNS, IAM, CloudFront, CloudFormation) provide the minimal skeleton as a starting template.
+Use the [S3 plugin](../packages/backend/src/plugins/s3/), the [SQS plugin](../packages/backend/src/plugins/sqs/), or the [SNS plugin](../packages/backend/src/plugins/sns/) as reference implementations. All three are complete and follow the same four-file plugin structure (`index.ts`, `schemas.ts`, `service.ts`, `routes.ts`). The SNS plugin is a particularly good reference for services with sub-resources (subscriptions), tag management, and batch operations. Scaffold services (IAM, CloudFront, CloudFormation) provide the minimal skeleton as a starting template.

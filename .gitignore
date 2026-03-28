@@ -13,9 +13,5 @@ dist
 # Logs
 *.log
 
-# macOS
-.DS_Store
-
 # Test coverage
 coverage
-/.claude/

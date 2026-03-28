@@ -10,7 +10,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 |----------------|-------------------|-------------------------------------------------------------------|
 | S3             | Fully implemented | Buckets, objects, upload/download                                 |
 | SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
-| SNS            | Scaffold          | Topic & subscription management                                   |
+| SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
 | IAM            | Scaffold          | User, role, and policy management                                 |
 | CloudFront     | Scaffold          | Distribution management                                           |
 | CloudFormation | Scaffold          | Stack & template management                                       |
@@ -95,7 +95,7 @@ localstack-explorer/
 │   │       ├── plugins/        # Auto-loaded plugins (one per service)
 │   │       │   ├── s3/         # Complete implementation
 │   │       │   ├── sqs/        # Complete implementation
-│   │       │   ├── sns/        # Scaffold
+│   │       │   ├── sns/        # Complete implementation
 │   │       │   ├── iam/        # Scaffold
 │   │       │   ├── cloudfront/ # Scaffold
 │   │       │   └── cloudformation/ # Scaffold
@@ -134,6 +134,7 @@ localstack-explorer/
 
 - **[S3 Service Guide](docs/s3-service.md)** — Complete reference for S3 operations: buckets, objects, upload/download, and API endpoints.
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
+- **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.
 - **[Architecture](docs/architecture.md)** — System design, backend plugin pattern, frontend data flow, and project conventions.
 - **[Development Guide](docs/development.md)** — Local setup, testing, coding standards, and contribution workflow.

@@ -18,10 +18,10 @@ This document describes the system design and key architectural decisions in Loc
 ┌─────────────────────────────┐
 │     Fastify API (:3001)     │
 │                             │
-│  ┌───────┐ ┌───────┐        │
-│  │  S3   │ │  SQS  │ ...    │  ← Fastify plugins
-│  │plugin │ │plugin │        │
-│  └───┬───┘ └───┬───┘        │
+│  ┌───────┐ ┌───────┐ ┌──────┐│
+│  │  S3   │ │  SQS  │ │ SNS  ││  ← Fastify plugins
+│  │plugin │ │plugin │ │plugin││
+│  └───┬───┘ └───┬───┘ └──┬───┘│
 │      │         │            │
 │  ┌───▼─────────▼──────┐     │
 │  │  AWS SDK v3 Clients │    │
@@ -75,7 +75,11 @@ src/
     │   ├── schemas.ts    # TypeBox schemas for queues and messages
     │   ├── service.ts    # SQSService — queue and message operations
     │   └── routes.ts     # Queue CRUD, purge, attributes, send/receive/delete messages
-    ├── sns/              # Scaffold
+    ├── sns/              # Complete implementation (same structure as s3/, sqs/)
+    │   ├── index.ts      # Plugin entry — creates SNS client and service
+    │   ├── schemas.ts    # TypeBox schemas for topics, subscriptions, publish, tags
+    │   ├── service.ts    # SNSService — topic, subscription, publish, and tag operations
+    │   └── routes.ts     # Topic CRUD, subscriptions, publish single/batch, tags
     ├── iam/              # Scaffold
     ├── cloudfront/       # Scaffold
     └── cloudformation/   # Scaffold
@@ -144,6 +148,8 @@ main.tsx
                      ├── s3/$bucketName.tsx (ObjectBrowser)
                      ├── sqs/index.tsx (QueueList)
                      ├── sqs/$queueName.tsx (QueueDetail)
+                     ├── sns/index.tsx (TopicList)
+                     ├── sns/$topicName.tsx (TopicDetail)
                      └── ...service routes
 ```
 
