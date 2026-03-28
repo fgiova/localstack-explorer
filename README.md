@@ -13,7 +13,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
 | IAM            | Scaffold          | User, role, and policy management                                 |
 | CloudFront     | Scaffold          | Distribution management                                           |
-| CloudFormation | Scaffold          | Stack & template management                                       |
+| CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
 
 ## Quick Start
 
@@ -98,7 +98,7 @@ localstack-explorer/
 │   │       │   ├── sns/        # Complete implementation
 │   │       │   ├── iam/        # Scaffold
 │   │       │   ├── cloudfront/ # Scaffold
-│   │       │   └── cloudformation/ # Scaffold
+│   │       │   └── cloudformation/ # Complete implementation
 │   │       └── shared/         # Error handling, shared types
 │   └── frontend/           # React SPA
 │       └── src/
@@ -135,6 +135,7 @@ localstack-explorer/
 - **[S3 Service Guide](docs/s3-service.md)** — Complete reference for S3 operations: buckets, objects, upload/download, and API endpoints.
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
+- **[CloudFormation Service Guide](docs/cloudformation.md)** — Complete reference for CloudFormation operations: stack CRUD, update, template editor, events timeline, and cross-service resource navigation.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.
 - **[Architecture](docs/architecture.md)** — System design, backend plugin pattern, frontend data flow, and project conventions.
 - **[Development Guide](docs/development.md)** — Local setup, testing, coding standards, and contribution workflow.

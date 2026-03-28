@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 
-interface Stack {
+export interface Stack {
   stackId?: string;
   stackName: string;
   status: string;
@@ -42,10 +42,11 @@ interface TemplateResponse {
   templateBody: string;
 }
 
-export function useListStacks() {
+export function useListStacks(refetchInterval?: number | false) {
   return useQuery({
     queryKey: ["cloudformation", "stacks"],
     queryFn: () => apiClient.get<StackListResponse>("/cloudformation"),
+    refetchInterval,
   });
 }
 
@@ -78,11 +79,28 @@ export function useCreateStack() {
   return useMutation({
     mutationFn: (body: {
       stackName: string;
-      templateBody: string;
+      templateBody?: string;
+      templateURL?: string;
       parameters?: { parameterKey: string; parameterValue: string }[];
     }) => apiClient.post("/cloudformation", body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cloudformation", "stacks"] });
+    },
+  });
+}
+
+export function useUpdateStack() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      stackName: string;
+      templateBody?: string;
+      templateURL?: string;
+      parameters?: { parameterKey: string; parameterValue: string }[];
+    }) => apiClient.put(`/cloudformation/${body.stackName}`, body),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["cloudformation", "stacks"] });
+      queryClient.invalidateQueries({ queryKey: ["cloudformation", "stack", variables.stackName] });
     },
   });
 }

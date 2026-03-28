@@ -4,6 +4,8 @@ import {
   StackListResponseSchema,
   StackDetailSchema,
   CreateStackBodySchema,
+  UpdateStackBodySchema,
+  UpdateStackResponseSchema,
   StackParamsSchema,
   StackEventsResponseSchema,
   TemplateResponseSchema,
@@ -62,13 +64,31 @@ export async function cloudformationRoutes(
       response: { 201: MessageResponseSchema, 400: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request, reply) => {
-      const { stackName, templateBody, parameters } = request.body as {
+      const { stackName, templateBody, templateURL, parameters } = request.body as {
         stackName: string;
-        templateBody: string;
+        templateBody?: string;
+        templateURL?: string;
         parameters?: { parameterKey: string; parameterValue: string }[];
       };
-      const result = await cloudformationService.createStack(stackName, templateBody, parameters);
+      const result = await cloudformationService.createStack(stackName, templateBody, templateURL, parameters);
       return reply.status(201).send(result);
+    },
+  });
+
+  app.put("/:stackName", {
+    schema: {
+      body: UpdateStackBodySchema,
+      params: StackParamsSchema,
+      response: { 200: UpdateStackResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+    },
+    handler: async (request) => {
+      const { stackName } = request.params as { stackName: string };
+      const { templateBody, templateURL, parameters } = request.body as {
+        templateBody?: string;
+        templateURL?: string;
+        parameters?: { parameterKey: string; parameterValue: string }[];
+      };
+      return cloudformationService.updateStack(stackName, templateBody, templateURL, parameters);
     },
   });
 

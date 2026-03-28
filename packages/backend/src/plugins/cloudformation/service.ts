@@ -3,6 +3,7 @@ import {
   ListStacksCommand,
   DescribeStacksCommand,
   CreateStackCommand,
+  UpdateStackCommand,
   DeleteStackCommand,
   DescribeStackEventsCommand,
   ListStackResourcesCommand,
@@ -77,9 +78,18 @@ export class CloudFormationService {
 
   async createStack(
     stackName: string,
-    templateBody: string,
+    templateBody?: string,
+    templateURL?: string,
     parameters?: { parameterKey: string; parameterValue: string }[]
   ): Promise<{ message: string; stackId?: string }> {
+    if (!templateBody && !templateURL) {
+      throw new AppError(
+        "Either templateBody or templateURL must be provided",
+        400,
+        "VALIDATION_ERROR"
+      );
+    }
+
     const params: Parameter[] | undefined = parameters?.map((p) => ({
       ParameterKey: p.parameterKey,
       ParameterValue: p.parameterValue,
@@ -87,11 +97,40 @@ export class CloudFormationService {
 
     const command = new CreateStackCommand({
       StackName: stackName,
-      TemplateBody: templateBody,
+      ...(templateBody ? { TemplateBody: templateBody } : {}),
+      ...(templateURL ? { TemplateURL: templateURL } : {}),
       Parameters: params,
     });
     const response = await this.client.send(command);
     return { message: `Stack '${stackName}' creation initiated`, stackId: response.StackId };
+  }
+
+  async updateStack(
+    stackName: string,
+    templateBody?: string,
+    templateURL?: string,
+    parameters?: { parameterKey: string; parameterValue: string }[]
+  ): Promise<{ message: string; stackId?: string }> {
+    const params: Parameter[] | undefined = parameters?.map((p) => ({
+      ParameterKey: p.parameterKey,
+      ParameterValue: p.parameterValue,
+    }));
+
+    try {
+      const command = new UpdateStackCommand({
+        StackName: stackName,
+        TemplateBody: templateBody,
+        TemplateURL: templateURL,
+        Parameters: params,
+      });
+      const response = await this.client.send(command);
+      return { message: `Stack '${stackName}' update initiated`, stackId: response.StackId };
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === "ValidationError" && error.message?.includes("does not exist")) {
+        throw new AppError(`Stack '${stackName}' not found`, 404, "STACK_NOT_FOUND");
+      }
+      throw error;
+    }
   }
 
   async deleteStack(stackName: string): Promise<{ success: boolean }> {

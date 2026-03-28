@@ -47,7 +47,8 @@ export type StackDetail = Static<typeof StackDetailSchema>;
 
 export const CreateStackBodySchema = Type.Object({
   stackName: Type.String({ minLength: 1 }),
-  templateBody: Type.String({ minLength: 1 }),
+  templateBody: Type.Optional(Type.String({ minLength: 1 })),
+  templateURL: Type.Optional(Type.String({ minLength: 1 })),
   parameters: Type.Optional(
     Type.Array(
       Type.Object({
@@ -56,6 +57,25 @@ export const CreateStackBodySchema = Type.Object({
       })
     )
   ),
+});
+
+export const UpdateStackBodySchema = Type.Object({
+  stackName: Type.String({ minLength: 1 }),
+  templateBody: Type.Optional(Type.String()),
+  templateURL: Type.Optional(Type.String()),
+  parameters: Type.Optional(
+    Type.Array(
+      Type.Object({
+        parameterKey: Type.String(),
+        parameterValue: Type.String(),
+      })
+    )
+  ),
+});
+
+export const UpdateStackResponseSchema = Type.Object({
+  message: Type.String(),
+  stackId: Type.Optional(Type.String()),
 });
 
 export const StackParamsSchema = Type.Object({

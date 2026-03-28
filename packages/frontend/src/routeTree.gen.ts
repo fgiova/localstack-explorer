@@ -19,6 +19,7 @@ import { Route as CloudformationIndexRouteImport } from './routes/cloudformation
 import { Route as SqsQueueNameRouteImport } from './routes/sqs/$queueName'
 import { Route as SnsTopicNameRouteImport } from './routes/sns/$topicName'
 import { Route as S3BucketNameRouteImport } from './routes/s3/$bucketName'
+import { Route as CloudformationStackNameRouteImport } from './routes/cloudformation/$stackName'
 import { Route as IamUsersUserNameRouteImport } from './routes/iam/users/$userName'
 import { Route as IamPoliciesPolicyArnRouteImport } from './routes/iam/policies/$policyArn'
 import { Route as IamGroupsGroupNameRouteImport } from './routes/iam/groups/$groupName'
@@ -73,6 +74,11 @@ const S3BucketNameRoute = S3BucketNameRouteImport.update({
   path: '/s3/$bucketName',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CloudformationStackNameRoute = CloudformationStackNameRouteImport.update({
+  id: '/cloudformation/$stackName',
+  path: '/cloudformation/$stackName',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IamUsersUserNameRoute = IamUsersUserNameRouteImport.update({
   id: '/iam/users/$userName',
   path: '/iam/users/$userName',
@@ -91,6 +97,7 @@ const IamGroupsGroupNameRoute = IamGroupsGroupNameRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cloudformation/$stackName': typeof CloudformationStackNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cloudformation/$stackName': typeof CloudformationStackNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
@@ -122,6 +130,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cloudformation/$stackName': typeof CloudformationStackNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cloudformation/$stackName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cloudformation/$stackName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cloudformation/$stackName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
@@ -185,6 +197,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CloudformationStackNameRoute: typeof CloudformationStackNameRoute
   S3BucketNameRoute: typeof S3BucketNameRoute
   SnsTopicNameRoute: typeof SnsTopicNameRoute
   SqsQueueNameRoute: typeof SqsQueueNameRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof S3BucketNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cloudformation/$stackName': {
+      id: '/cloudformation/$stackName'
+      path: '/cloudformation/$stackName'
+      fullPath: '/cloudformation/$stackName'
+      preLoaderRoute: typeof CloudformationStackNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/iam/users/$userName': {
       id: '/iam/users/$userName'
       path: '/iam/users/$userName'
@@ -297,6 +317,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CloudformationStackNameRoute: CloudformationStackNameRoute,
   S3BucketNameRoute: S3BucketNameRoute,
   SnsTopicNameRoute: SnsTopicNameRoute,
   SqsQueueNameRoute: SqsQueueNameRoute,
