@@ -100,6 +100,7 @@ The backend uses [env-schema](https://github.com/fastify/env-schema) for environ
 |-----------------------|----------------------------------|------------------------------------------|
 | `PORT`                | `3001`                           | Backend server port                      |
 | `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | LocalStack endpoint URL                  |
+| `LOCALSTACK_REGION`   | `us-east-1`                     | AWS region for LocalStack clients        |
 | `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services |
 
 Create a `.env` file in `packages/backend/` to override defaults.

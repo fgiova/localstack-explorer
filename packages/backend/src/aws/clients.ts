@@ -11,7 +11,7 @@ import { config } from "../config.js";
 
 const commonConfig = {
   endpoint: config.localstackEndpoint,
-  region: "us-east-1",
+  region: config.localstackRegion,
   credentials: {
     accessKeyId: "test",
     secretAccessKey: "test",

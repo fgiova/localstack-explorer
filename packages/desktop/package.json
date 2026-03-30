@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "main": "main.cjs",
   "scripts": {
-    "dev": "electron .",
     "build": "node scripts/build.mjs && electron-builder --config electron-builder.json"
   },
   "devDependencies": {

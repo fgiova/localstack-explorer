@@ -55,6 +55,7 @@ Create a `.env` file in `packages/backend/` (or the project root) if you need no
 ```bash
 PORT=3001
 LOCALSTACK_ENDPOINT=http://localhost:4566
+LOCALSTACK_REGION=us-east-1
 ENABLED_SERVICES=s3,sqs,sns,iam,cloudformation
 ```
 
