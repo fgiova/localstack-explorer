@@ -9,6 +9,15 @@ services:
       - EAGER_SERVICE_LOADING=1
     volumes:
       - localstack-data:/var/lib/localstack
+  localstack-explorer:
+    image: fgiova/localstack-explorer:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+      - LOCALSTACK_REGION=eu-south-1
+    depends_on:
+      - localstack
 
 volumes:
   localstack-data:

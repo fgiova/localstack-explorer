@@ -75,6 +75,24 @@ pnpm start
 # → http://localhost:3001
 ```
 
+### Docker
+
+A pre-built multi-arch image is available on Docker Hub:
+
+```bash
+docker run -d -p 3001:3001 \
+  -e LOCALSTACK_ENDPOINT=http://host.docker.internal:4566 \
+  fgiova/localstack-explorer:latest
+```
+
+Then open [http://localhost:3001](http://localhost:3001).
+
+To build the Docker image locally for multiple platforms and push to a registry:
+
+```bash
+docker buildx build --push --platform linux/arm64,linux/amd64 --tag yourname/localstack-explorer:latest .
+```
+
 ### Desktop App (Electron)
 
 Package the application as a native desktop app:
@@ -95,12 +113,12 @@ pnpm test
 
 The backend uses [env-schema](https://github.com/fastify/env-schema) for environment variable validation with `.env` file support.
 
-| Variable              | Default                          | Description                              |
-|-----------------------|----------------------------------|------------------------------------------|
-| `PORT`                | `3001`                           | Backend server port                      |
-| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | Default LocalStack endpoint URL          |
-| `LOCALSTACK_REGION`   | `us-east-1`                     | Default AWS region for LocalStack clients|
-| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services |
+| Variable              | Default                                  | Description                               |
+|-----------------------|------------------------------------------|-------------------------------------------|
+| `PORT`                | `3001`                                   | Backend server port                       |
+| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`                  | Default LocalStack endpoint URL           |
+| `LOCALSTACK_REGION`   | `us-east-1`                              | Default AWS region for LocalStack clients |
+| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services  |
 
 Create a `.env` file in `packages/backend/` to override defaults.
 
@@ -177,23 +195,23 @@ localstack-explorer/
 
 ## Tech Stack
 
-| Layer            | Technology                              |
-|------------------|-----------------------------------------|
-| Monorepo         | pnpm workspaces                         |
-| Backend          | Fastify 5, TypeScript                   |
-| Frontend         | React 19, Vite 6, TypeScript            |
-| UI Components    | Shadcn/ui, Radix UI, Tailwind CSS 4     |
-| State Management | Zustand 5                               |
-| Data Fetching    | TanStack Query 5                        |
-| Routing          | TanStack Router 1 (file-based)          |
-| AWS SDK          | @aws-sdk/* v3                           |
-| Validation       | TypeBox 1                               |
-| Config           | env-schema (with dotenv)                |
-| Plugin Loading   | @fastify/autoload                       |
-| Static Serving   | @fastify/static (standalone/bundle mode)|
-| Bundler          | tsup (single-file CJS bundle)           |
-| Desktop          | Electron 33, electron-builder           |
-| Testing          | Vitest, React Testing Library           |
+| Layer            | Technology                               |
+|------------------|------------------------------------------|
+| Monorepo         | pnpm workspaces                          |
+| Backend          | Fastify 5, TypeScript                    |
+| Frontend         | React 19, Vite 6, TypeScript             |
+| UI Components    | Shadcn/ui, Radix UI, Tailwind CSS 4      |
+| State Management | Zustand 5                                |
+| Data Fetching    | TanStack Query 5                         |
+| Routing          | TanStack Router 1 (file-based)           |
+| AWS SDK          | @aws-sdk/* v3                            |
+| Validation       | TypeBox 1                                |
+| Config           | env-schema (with dotenv)                 |
+| Plugin Loading   | @fastify/autoload                        |
+| Static Serving   | @fastify/static (standalone/bundle mode) |
+| Bundler          | tsup (single-file CJS bundle)            |
+| Desktop          | Electron 33, electron-builder            |
+| Testing          | Vitest, React Testing Library            |
 
 ## Documentation
 
