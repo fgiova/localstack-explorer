@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { DynamoDBService } from "./service.js";
+import { DynamoDBService } from "./service.js";
 import {
   TableListResponseSchema,
   CreateTableBodySchema,
@@ -34,12 +34,7 @@ import {
 } from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
 
-export async function dynamodbRoutes(
-  app: FastifyInstance,
-  opts: { dynamodbService: DynamoDBService }
-) {
-  const { dynamodbService } = opts;
-
+export async function dynamodbRoutes(app: FastifyInstance) {
   // --- Table routes ---
 
   // List tables
@@ -47,8 +42,13 @@ export async function dynamodbRoutes(
     schema: {
       response: { 200: TableListResponseSchema },
     },
-    handler: async () => {
-      return dynamodbService.listTables();
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
+      return service.listTables();
     },
   });
 
@@ -62,7 +62,12 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request, reply) => {
-      const result = await dynamodbService.createTable(request.body as CreateTableBody);
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
+      const result = await service.createTable(request.body as CreateTableBody);
       return reply.status(201).send(result);
     },
   });
@@ -77,8 +82,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      return dynamodbService.describeTable(tableName);
+      return service.describeTable(tableName);
     },
   });
 
@@ -92,8 +102,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      return dynamodbService.deleteTable(tableName);
+      return service.deleteTable(tableName);
     },
   });
 
@@ -111,8 +126,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      const result = await dynamodbService.createGSI(tableName, request.body as CreateGSIBody);
+      const result = await service.createGSI(tableName, request.body as CreateGSIBody);
       return reply.status(201).send(result);
     },
   });
@@ -127,8 +147,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName, indexName } = request.params as { tableName: string; indexName: string };
-      return dynamodbService.deleteGSI(tableName, indexName);
+      return service.deleteGSI(tableName, indexName);
     },
   });
 
@@ -145,8 +170,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      return dynamodbService.scanItems(tableName, request.body as ScanBody);
+      return service.scanItems(tableName, request.body as ScanBody);
     },
   });
 
@@ -161,8 +191,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      return dynamodbService.queryItems(tableName, request.body as QueryBody);
+      return service.queryItems(tableName, request.body as QueryBody);
     },
   });
 
@@ -177,9 +212,14 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { key } = request.body as { key: Record<string, unknown> };
-      return dynamodbService.getItem(tableName, key);
+      return service.getItem(tableName, key);
     },
   });
 
@@ -194,9 +234,14 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { item } = request.body as { item: Record<string, unknown> };
-      const result = await dynamodbService.putItem(tableName, item);
+      const result = await service.putItem(tableName, item);
       return reply.status(201).send(result);
     },
   });
@@ -212,9 +257,14 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { key } = request.body as { key: Record<string, unknown> };
-      return dynamodbService.deleteItem(tableName, key);
+      return service.deleteItem(tableName, key);
     },
   });
 
@@ -229,12 +279,17 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { putItems, deleteKeys } = request.body as {
         putItems?: Record<string, unknown>[];
         deleteKeys?: Record<string, unknown>[];
       };
-      return dynamodbService.batchWriteItems(tableName, putItems, deleteKeys);
+      return service.batchWriteItems(tableName, putItems, deleteKeys);
     },
   });
 
@@ -249,12 +304,17 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { keys, projectionExpression } = request.body as {
         keys: Record<string, unknown>[];
         projectionExpression?: string;
       };
-      return dynamodbService.batchGetItems(tableName, keys, projectionExpression);
+      return service.batchGetItems(tableName, keys, projectionExpression);
     },
   });
 
@@ -269,11 +329,16 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { statement, parameters } = request.body as {
         statement: string;
         parameters?: unknown[];
       };
-      return dynamodbService.executePartiQL(statement, parameters);
+      return service.executePartiQL(statement, parameters);
     },
   });
 
@@ -289,8 +354,13 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
-      return dynamodbService.describeStream(tableName);
+      return service.describeStream(tableName);
     },
   });
 
@@ -305,9 +375,14 @@ export async function dynamodbRoutes(
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new DynamoDBService(clients.dynamodb, clients.dynamodbDocument, clients.dynamodbStreams);
       const { tableName } = request.params as { tableName: string };
       const { shardId, limit } = request.query as { shardId?: string; limit?: number };
-      return dynamodbService.getStreamRecords(tableName, shardId, limit);
+      return service.getStreamRecords(tableName, shardId, limit);
     },
   });
 }

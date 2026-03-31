@@ -6,6 +6,9 @@ import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import autoload from "@fastify/autoload";
 import { config } from "./config.js";
+import { checkLocalstackHealth } from "./health.js";
+import localstackConfigPlugin from "./plugins/localstack-config.js";
+import clientCachePlugin from "./plugins/client-cache.js";
 import { registerErrorHandler } from "./shared/errors.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,12 +27,23 @@ async function main() {
   // Register centralized error handler
   registerErrorHandler(app);
 
+  // Register localstack config plugin (decorates request with localstackConfig)
+  await app.register(localstackConfigPlugin);
+
+  // Register client cache plugin (decorates instance with clientCache)
+  await app.register(clientCachePlugin);
+
   // Health check
-  app.get("/api/health", async () => ({ status: "ok" }));
+  app.get("/api/health", async (request) => {
+    const { endpoint, region } = request.localstackConfig;
+    return checkLocalstackHealth(endpoint, region);
+  });
 
   // Enabled services endpoint
   app.get("/api/services", async () => ({
     services: config.enabledServices,
+    defaultEndpoint: config.localstackEndpoint,
+    defaultRegion: config.localstackRegion,
   }));
 
   // Autoload service plugins from plugins directory (only enabled services)
@@ -46,7 +60,7 @@ async function main() {
   });
 
   // Serve frontend static files if public directory exists
-  const publicDir = path.join(__dirname, "..", "public");
+  const publicDir = path.join(__dirname, "public");
   if (fs.existsSync(publicDir)) {
     await app.register(fastifyStatic, {
       root: publicDir,

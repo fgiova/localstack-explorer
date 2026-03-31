@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { CloudFormationService } from "./service.js";
+import { CloudFormationService } from "./service.js";
 import {
   StackListResponseSchema,
   StackDetailSchema,
@@ -14,15 +14,17 @@ import {
 } from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
 
-export async function cloudformationRoutes(
-  app: FastifyInstance,
-  opts: { cloudformationService: CloudFormationService }
-) {
-  const { cloudformationService } = opts;
-
+export async function cloudformationRoutes(app: FastifyInstance) {
   app.get("/", {
     schema: { response: { 200: StackListResponseSchema, 500: ErrorResponseSchema } },
-    handler: async () => cloudformationService.listStacks(),
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
+      return service.listStacks();
+    },
   });
 
   app.get("/:stackName", {
@@ -31,8 +33,13 @@ export async function cloudformationRoutes(
       response: { 200: StackDetailSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName } = request.params as { stackName: string };
-      return cloudformationService.getStack(stackName);
+      return service.getStack(stackName);
     },
   });
 
@@ -42,8 +49,13 @@ export async function cloudformationRoutes(
       response: { 200: StackEventsResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName } = request.params as { stackName: string };
-      return cloudformationService.getStackEvents(stackName);
+      return service.getStackEvents(stackName);
     },
   });
 
@@ -53,8 +65,13 @@ export async function cloudformationRoutes(
       response: { 200: TemplateResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName } = request.params as { stackName: string };
-      return cloudformationService.getTemplate(stackName);
+      return service.getTemplate(stackName);
     },
   });
 
@@ -64,13 +81,18 @@ export async function cloudformationRoutes(
       response: { 201: MessageResponseSchema, 400: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName, templateBody, templateURL, parameters } = request.body as {
         stackName: string;
         templateBody?: string;
         templateURL?: string;
         parameters?: { parameterKey: string; parameterValue: string }[];
       };
-      const result = await cloudformationService.createStack(stackName, templateBody, templateURL, parameters);
+      const result = await service.createStack(stackName, templateBody, templateURL, parameters);
       return reply.status(201).send(result);
     },
   });
@@ -82,13 +104,18 @@ export async function cloudformationRoutes(
       response: { 200: UpdateStackResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName } = request.params as { stackName: string };
       const { templateBody, templateURL, parameters } = request.body as {
         templateBody?: string;
         templateURL?: string;
         parameters?: { parameterKey: string; parameterValue: string }[];
       };
-      return cloudformationService.updateStack(stackName, templateBody, templateURL, parameters);
+      return service.updateStack(stackName, templateBody, templateURL, parameters);
     },
   });
 
@@ -98,8 +125,13 @@ export async function cloudformationRoutes(
       response: { 200: DeleteResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new CloudFormationService(clients.cloudformation);
       const { stackName } = request.params as { stackName: string };
-      return cloudformationService.deleteStack(stackName);
+      return service.deleteStack(stackName);
     },
   });
 }

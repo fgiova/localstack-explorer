@@ -4,10 +4,12 @@ import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import type { ServiceName } from "./config.js";
 import { config } from "./config.js";
+import { checkLocalstackHealth } from "./health.js";
 import cloudformationPlugin from "./plugins/cloudformation/index.js";
-import cloudfrontPlugin from "./plugins/cloudfront/index.js";
 import dynamodbPlugin from "./plugins/dynamodb/index.js";
 import iamPlugin from "./plugins/iam/index.js";
+import localstackConfigPlugin from "./plugins/localstack-config.js";
+import clientCachePlugin from "./plugins/client-cache.js";
 // Explicit plugin imports (replaces autoload for bundled builds)
 import s3Plugin from "./plugins/s3/index.js";
 import snsPlugin from "./plugins/sns/index.js";
@@ -27,7 +29,6 @@ const pluginMap: Record<
 	sqs: sqsPlugin,
 	sns: snsPlugin,
 	iam: iamPlugin,
-	cloudfront: cloudfrontPlugin,
 	cloudformation: cloudformationPlugin,
 	dynamodb: dynamodbPlugin,
 };
@@ -46,12 +47,23 @@ async function main() {
 	// Register centralized error handler
 	registerErrorHandler(app);
 
+	// Register localstack config plugin (decorates request with localstackConfig)
+	await app.register(localstackConfigPlugin);
+
+	// Register client cache plugin (decorates instance with clientCache)
+	await app.register(clientCachePlugin);
+
 	// Health check
-	app.get("/api/health", async () => ({ status: "ok" }));
+	app.get("/api/health", async (request) => {
+		const { endpoint, region } = request.localstackConfig;
+		return checkLocalstackHealth(endpoint, region);
+	});
 
 	// Enabled services endpoint
 	app.get("/api/services", async () => ({
 		services: config.enabledServices,
+		defaultEndpoint: config.localstackEndpoint,
+		defaultRegion: config.localstackRegion,
 	}));
 
 	// Register only enabled service plugins with /api prefix

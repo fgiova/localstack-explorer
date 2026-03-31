@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { IAMService } from "./service.js";
+import { IAMService } from "./service.js";
 import {
   UserListResponseSchema,
   CreateUserBodySchema,
@@ -27,9 +27,7 @@ import {
 } from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
 
-export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMService }) {
-  const { iamService } = opts;
-
+export async function iamRoutes(app: FastifyInstance) {
   // ── User Routes ──────────────────────────────────────────────────────
 
   // List users
@@ -39,7 +37,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
         200: UserListResponseSchema,
       },
     },
-    handler: async () => iamService.listUsers(),
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
+      return service.listUsers();
+    },
   });
 
   // Create user
@@ -52,8 +57,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, path } = request.body as { userName: string; path?: string };
-      const result = await iamService.createUser(userName, path);
+      const result = await service.createUser(userName, path);
       return reply.status(201).send(result);
     },
   });
@@ -67,8 +77,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.getUser(userName);
+      return service.getUser(userName);
     },
   });
 
@@ -81,8 +96,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.deleteUser(userName);
+      return service.deleteUser(userName);
     },
   });
 
@@ -97,8 +117,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.listAccessKeys(userName);
+      return service.listAccessKeys(userName);
     },
   });
 
@@ -111,8 +136,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      const result = await iamService.createAccessKey(userName);
+      const result = await service.createAccessKey(userName);
       return reply.status(201).send(result);
     },
   });
@@ -126,8 +156,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, accessKeyId } = request.params as { userName: string; accessKeyId: string };
-      return iamService.deleteAccessKey(userName, accessKeyId);
+      return service.deleteAccessKey(userName, accessKeyId);
     },
   });
 
@@ -142,9 +177,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, accessKeyId } = request.params as { userName: string; accessKeyId: string };
       const { status } = request.body as { status: "Active" | "Inactive" };
-      return iamService.updateAccessKey(userName, accessKeyId, status);
+      return service.updateAccessKey(userName, accessKeyId, status);
     },
   });
 
@@ -159,8 +199,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.listUserPolicies(userName);
+      return service.listUserPolicies(userName);
     },
   });
 
@@ -173,8 +218,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, policyName } = request.params as { userName: string; policyName: string };
-      return iamService.getUserPolicy(userName, policyName);
+      return service.getUserPolicy(userName, policyName);
     },
   });
 
@@ -189,9 +239,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, policyName } = request.params as { userName: string; policyName: string };
       const { policyDocument } = request.body as { policyDocument: string };
-      return iamService.putUserPolicy(userName, policyName, policyDocument);
+      return service.putUserPolicy(userName, policyName, policyDocument);
     },
   });
 
@@ -204,8 +259,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, policyName } = request.params as { userName: string; policyName: string };
-      return iamService.deleteUserPolicy(userName, policyName);
+      return service.deleteUserPolicy(userName, policyName);
     },
   });
 
@@ -220,8 +280,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.listAttachedUserPolicies(userName);
+      return service.listAttachedUserPolicies(userName);
     },
   });
 
@@ -236,9 +301,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
       const { policyArn } = request.body as { policyArn: string };
-      return iamService.attachUserPolicy(userName, policyArn);
+      return service.attachUserPolicy(userName, policyArn);
     },
   });
 
@@ -251,8 +321,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName, policyArn } = request.params as { userName: string; policyArn: string };
-      return iamService.detachUserPolicy(userName, decodeURIComponent(policyArn));
+      return service.detachUserPolicy(userName, decodeURIComponent(policyArn));
     },
   });
 
@@ -267,8 +342,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { userName } = request.params as { userName: string };
-      return iamService.listGroupsForUser(userName);
+      return service.listGroupsForUser(userName);
     },
   });
 
@@ -281,7 +361,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
         200: GroupListResponseSchema,
       },
     },
-    handler: async () => iamService.listGroups(),
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
+      return service.listGroups();
+    },
   });
 
   // Create group
@@ -294,8 +381,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, path } = request.body as { groupName: string; path?: string };
-      const result = await iamService.createGroup(groupName, path);
+      const result = await service.createGroup(groupName, path);
       return reply.status(201).send(result);
     },
   });
@@ -309,8 +401,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
-      return iamService.getGroup(groupName);
+      return service.getGroup(groupName);
     },
   });
 
@@ -323,8 +420,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
-      return iamService.deleteGroup(groupName);
+      return service.deleteGroup(groupName);
     },
   });
 
@@ -341,9 +443,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
       const { userName } = request.body as { userName: string };
-      return iamService.addUserToGroup(groupName, userName);
+      return service.addUserToGroup(groupName, userName);
     },
   });
 
@@ -356,8 +463,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, userName } = request.params as { groupName: string; userName: string };
-      return iamService.removeUserFromGroup(groupName, userName);
+      return service.removeUserFromGroup(groupName, userName);
     },
   });
 
@@ -372,8 +484,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
-      return iamService.listGroupPolicies(groupName);
+      return service.listGroupPolicies(groupName);
     },
   });
 
@@ -386,8 +503,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, policyName } = request.params as { groupName: string; policyName: string };
-      return iamService.getGroupPolicy(groupName, policyName);
+      return service.getGroupPolicy(groupName, policyName);
     },
   });
 
@@ -402,9 +524,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, policyName } = request.params as { groupName: string; policyName: string };
       const { policyDocument } = request.body as { policyDocument: string };
-      return iamService.putGroupPolicy(groupName, policyName, policyDocument);
+      return service.putGroupPolicy(groupName, policyName, policyDocument);
     },
   });
 
@@ -417,8 +544,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, policyName } = request.params as { groupName: string; policyName: string };
-      return iamService.deleteGroupPolicy(groupName, policyName);
+      return service.deleteGroupPolicy(groupName, policyName);
     },
   });
 
@@ -433,8 +565,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
-      return iamService.listAttachedGroupPolicies(groupName);
+      return service.listAttachedGroupPolicies(groupName);
     },
   });
 
@@ -449,9 +586,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName } = request.params as { groupName: string };
       const { policyArn } = request.body as { policyArn: string };
-      return iamService.attachGroupPolicy(groupName, policyArn);
+      return service.attachGroupPolicy(groupName, policyArn);
     },
   });
 
@@ -464,8 +606,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { groupName, policyArn } = request.params as { groupName: string; policyArn: string };
-      return iamService.detachGroupPolicy(groupName, decodeURIComponent(policyArn));
+      return service.detachGroupPolicy(groupName, decodeURIComponent(policyArn));
     },
   });
 
@@ -479,8 +626,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { scope } = request.query as { scope?: string };
-      return iamService.listManagedPolicies(scope);
+      return service.listManagedPolicies(scope);
     },
   });
 
@@ -494,13 +646,18 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyName, policyDocument, description, path } = request.body as {
         policyName: string;
         policyDocument: string;
         description?: string;
         path?: string;
       };
-      const result = await iamService.createPolicy(policyName, policyDocument, description, path);
+      const result = await service.createPolicy(policyName, policyDocument, description, path);
       return reply.status(201).send(result);
     },
   });
@@ -514,8 +671,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn } = request.params as { policyArn: string };
-      return iamService.getPolicy(decodeURIComponent(policyArn));
+      return service.getPolicy(decodeURIComponent(policyArn));
     },
   });
 
@@ -528,8 +690,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn } = request.params as { policyArn: string };
-      return iamService.deletePolicy(decodeURIComponent(policyArn));
+      return service.deletePolicy(decodeURIComponent(policyArn));
     },
   });
 
@@ -542,9 +709,14 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn } = request.params as { policyArn: string };
       const { versionId } = request.query as { versionId?: string };
-      return iamService.getPolicyDocument(decodeURIComponent(policyArn), versionId);
+      return service.getPolicyDocument(decodeURIComponent(policyArn), versionId);
     },
   });
 
@@ -559,8 +731,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn } = request.params as { policyArn: string };
-      return iamService.listPolicyVersions(decodeURIComponent(policyArn));
+      return service.listPolicyVersions(decodeURIComponent(policyArn));
     },
   });
 
@@ -575,12 +752,17 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn } = request.params as { policyArn: string };
       const { policyDocument, setAsDefault } = request.body as {
         policyDocument: string;
         setAsDefault: boolean;
       };
-      const result = await iamService.createPolicyVersion(
+      const result = await service.createPolicyVersion(
         decodeURIComponent(policyArn),
         policyDocument,
         setAsDefault,
@@ -598,8 +780,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn, versionId } = request.params as { policyArn: string; versionId: string };
-      return iamService.deletePolicyVersion(decodeURIComponent(policyArn), versionId);
+      return service.deletePolicyVersion(decodeURIComponent(policyArn), versionId);
     },
   });
 
@@ -612,8 +799,13 @@ export async function iamRoutes(app: FastifyInstance, opts: { iamService: IAMSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new IAMService(clients.iam);
       const { policyArn, versionId } = request.params as { policyArn: string; versionId: string };
-      return iamService.setDefaultPolicyVersion(decodeURIComponent(policyArn), versionId);
+      return service.setDefaultPolicyVersion(decodeURIComponent(policyArn), versionId);
     },
   });
 }

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { S3Service } from "./service.js";
+import { S3Service } from "./service.js";
 import {
   BucketListResponseSchema,
   CreateBucketBodySchema,
@@ -14,9 +14,7 @@ import {
 } from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
 
-export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Service }) {
-  const { s3Service } = opts;
-
+export async function s3Routes(app: FastifyInstance) {
   // List buckets
   app.get("/", {
     schema: {
@@ -24,8 +22,13 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
         200: BucketListResponseSchema,
       },
     },
-    handler: async () => {
-      return s3Service.listBuckets();
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
+      return service.listBuckets();
     },
   });
 
@@ -39,8 +42,13 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { name } = request.body as { name: string };
-      const result = await s3Service.createBucket(name);
+      const result = await service.createBucket(name);
       return reply.status(201).send(result);
     },
   });
@@ -56,8 +64,13 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
-      return s3Service.deleteBucket(bucketName);
+      return service.deleteBucket(bucketName);
     },
   });
 
@@ -72,6 +85,11 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
       const { prefix, delimiter, continuationToken, maxKeys } = request.query as {
         prefix?: string;
@@ -79,7 +97,7 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
         continuationToken?: string;
         maxKeys?: number;
       };
-      return s3Service.listObjects(bucketName, prefix, delimiter, continuationToken, maxKeys);
+      return service.listObjects(bucketName, prefix, delimiter, continuationToken, maxKeys);
     },
   });
 
@@ -94,9 +112,14 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
       const { key } = request.query as { key: string };
-      return s3Service.getObjectProperties(bucketName, key);
+      return service.getObjectProperties(bucketName, key);
     },
   });
 
@@ -109,6 +132,11 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
       const data = await request.file();
       if (!data) {
@@ -116,7 +144,7 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       }
       const buffer = await data.toBuffer();
       const key = (data.fields.key as { value: string } | undefined)?.value ?? data.filename;
-      return s3Service.uploadObject(bucketName, key, buffer, data.mimetype);
+      return service.uploadObject(bucketName, key, buffer, data.mimetype);
     },
   });
 
@@ -127,9 +155,14 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       querystring: ObjectKeyQuerySchema,
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
       const { key } = request.query as { key: string };
-      const result = await s3Service.downloadObject(bucketName, key);
+      const result = await service.downloadObject(bucketName, key);
       const filename = key.split("/").pop() ?? key;
       return reply
         .header("Content-Type", result.contentType)
@@ -148,9 +181,14 @@ export async function s3Routes(app: FastifyInstance, opts: { s3Service: S3Servic
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new S3Service(clients.s3);
       const { bucketName } = request.params as { bucketName: string };
       const { key } = request.query as { key: string };
-      return s3Service.deleteObject(bucketName, key);
+      return service.deleteObject(bucketName, key);
     },
   });
 }

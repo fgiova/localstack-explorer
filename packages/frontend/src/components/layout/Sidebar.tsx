@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HardDrive, MessageSquare, Bell, Shield, Globe, Layers, Database, ChevronLeft } from "lucide-react";
+import { HardDrive, MessageSquare, Bell, Shield, Layers, Database, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ const services = [
   { name: "SQS", key: "sqs", path: "/sqs", icon: MessageSquare, description: "Message Queue" },
   { name: "SNS", key: "sns", path: "/sns", icon: Bell, description: "Notifications" },
   { name: "IAM", key: "iam", path: "/iam", icon: Shield, description: "Identity & Access" },
-  { name: "CloudFront", key: "cloudfront", path: "/cloudfront", icon: Globe, description: "CDN" },
   { name: "CloudFormation", key: "cloudformation", path: "/cloudformation", icon: Layers, description: "Infrastructure as Code" },
   { name: "DynamoDB", key: "dynamodb", path: "/dynamodb", icon: Database, description: "NoSQL Database" },
 ];

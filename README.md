@@ -12,7 +12,6 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
 | SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
 | IAM            | Fully implemented | Users, groups, managed/inline policies, access keys, versioning   |
-| CloudFront     | Fully implemented | Distribution create, update, delete, list, detail (**Pro only**)  |
 | CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
 | DynamoDB       | Fully implemented | Table management, create, list, detail views                      |
 
@@ -38,7 +37,7 @@ pnpm install
 docker compose up -d
 ```
 
-This starts LocalStack with all required services (S3, SQS, SNS, IAM, CloudFront, CloudFormation, DynamoDB) on `http://localhost:4566`.
+This starts LocalStack with all required services (S3, SQS, SNS, IAM, CloudFormation, DynamoDB) on `http://localhost:4566`.
 
 ### Development
 
@@ -99,11 +98,22 @@ The backend uses [env-schema](https://github.com/fastify/env-schema) for environ
 | Variable              | Default                          | Description                              |
 |-----------------------|----------------------------------|------------------------------------------|
 | `PORT`                | `3001`                           | Backend server port                      |
-| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | LocalStack endpoint URL                  |
-| `LOCALSTACK_REGION`   | `us-east-1`                     | AWS region for LocalStack clients        |
+| `LOCALSTACK_ENDPOINT` | `http://localhost:4566`          | Default LocalStack endpoint URL          |
+| `LOCALSTACK_REGION`   | `us-east-1`                     | Default AWS region for LocalStack clients|
 | `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services |
 
 Create a `.env` file in `packages/backend/` to override defaults.
+
+### Runtime Region & Endpoint Selection
+
+Region and endpoint can be changed at runtime from the UI without restarting the server:
+
+- **Region selector** — a dropdown in the header lists all 30 AWS regions. The change takes effect immediately for all subsequent API calls.
+- **Endpoint modal** — click the connection indicator (server icon) in the header to enter a custom LocalStack endpoint. The modal tests connectivity against `GET /api/health` (which returns `{ connected, error? }`) and only allows saving after a successful test.
+- **Auto-detection** — if the configured endpoint is unreachable at startup, the endpoint modal opens automatically so you can enter a valid URL.
+- **Server defaults** — on first load (before the user has ever changed settings), the frontend fetches `defaultEndpoint` and `defaultRegion` from `GET /api/services` and applies them. This means the values of `LOCALSTACK_ENDPOINT` and `LOCALSTACK_REGION` configured on the server are always reflected in the UI for new sessions.
+
+Each browser tab maintains its own endpoint and region settings (persisted in `localStorage`), so you can connect multiple tabs to different LocalStack instances simultaneously. Once a user explicitly changes endpoint or region via the UI, those values take precedence over server defaults.
 
 ### Selective Service Enablement
 
@@ -114,10 +124,10 @@ By default, only a subset of services is enabled. You can control which services
 ENABLED_SERVICES=s3,sqs
 
 # Enable all available services
-ENABLED_SERVICES=s3,sqs,sns,iam,cloudfront,cloudformation,dynamodb
+ENABLED_SERVICES=s3,sqs,sns,iam,cloudformation,dynamodb
 ```
 
-Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudfront` (requires [LocalStack Pro](https://localstack.cloud/pricing)), `cloudformation`, `dynamodb`.
+Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudformation`, `dynamodb`.
 
 When a service is disabled:
 - Its backend API routes are **not registered** (requests return 404)
@@ -137,13 +147,13 @@ localstack-explorer/
 │   │       ├── index.ts        # Entry point (autoload plugins, serves frontend)
 │   │       ├── bundle.ts       # Bundle entry point (explicit plugin imports)
 │   │       ├── config.ts       # env-schema configuration
-│   │       ├── aws/            # AWS SDK client factories
+│   │       ├── health.ts       # LocalStack connectivity check
+│   │       ├── aws/            # AWS SDK client factories & cache
 │   │       ├── plugins/        # Auto-loaded plugins (one per service)
 │   │       │   ├── s3/         # Complete implementation
 │   │       │   ├── sqs/        # Complete implementation
 │   │       │   ├── sns/        # Complete implementation
 │   │       │   ├── iam/        # Complete implementation
-│   │       │   ├── cloudfront/ # Complete implementation
 │   │       │   ├── cloudformation/ # Complete implementation
 │   │       │   └── dynamodb/  # Complete implementation
 │   │       └── shared/         # Error handling, shared types
@@ -151,8 +161,9 @@ localstack-explorer/
 │       └── src/
 │           ├── routes/         # TanStack Router file-based routes
 │           ├── components/     # UI components (Shadcn/ui + custom)
+│           │   └── settings/   # Region selector, endpoint modal
 │           ├── api/            # TanStack Query hooks
-│           ├── stores/         # Zustand state management
+│           ├── stores/         # Zustand state management (app + config)
 │           └── lib/            # Utilities and API client
 │   └── desktop/            # Electron desktop app
 │       ├── main.cjs            # Electron main process
@@ -190,7 +201,6 @@ localstack-explorer/
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
 - **[IAM Service Guide](docs/iam.md)** — Complete reference for IAM operations: users, groups, managed/inline policies, access keys, policy versioning, and cascading deletes.
-- **[CloudFront Service Guide](docs/cloudfront.md)** — Complete reference for CloudFront operations: distribution create, update, delete, list, and detail views. Requires LocalStack Pro.
 - **[CloudFormation Service Guide](docs/cloudformation.md)** — Complete reference for CloudFormation operations: stack CRUD, update, template editor, events timeline, and cross-service resource navigation.
 - **[DynamoDB Service Guide](docs/dynamodb.md)** — Complete reference for DynamoDB operations: table management, creation, listing, and detail views.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.

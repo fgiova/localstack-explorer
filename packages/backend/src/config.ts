@@ -6,7 +6,6 @@ const ALL_SERVICES = [
 	"sqs",
 	"sns",
 	"iam",
-	"cloudfront",
 	"cloudformation",
 	"dynamodb",
 ] as const;

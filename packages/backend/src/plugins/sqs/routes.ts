@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { SQSService } from "./service.js";
+import { SQSService } from "./service.js";
 import {
   QueueListResponseSchema,
   CreateQueueBodySchema,
@@ -15,9 +15,7 @@ import {
 } from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
 
-export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSService }) {
-  const { sqsService } = opts;
-
+export async function sqsRoutes(app: FastifyInstance) {
   // List queues
   app.get("/", {
     schema: {
@@ -26,7 +24,14 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
         501: ErrorResponseSchema,
       },
     },
-    handler: async () => sqsService.listQueues(),
+    handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
+      return service.listQueues();
+    },
   });
 
   // Create queue
@@ -40,8 +45,13 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { name } = request.body as { name: string };
-      const result = await sqsService.createQueue(name);
+      const result = await service.createQueue(name);
       return reply.status(201).send(result);
     },
   });
@@ -56,9 +66,14 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
-      const queueUrl = await sqsService.getQueueUrl(queueName);
-      return sqsService.deleteQueue(queueUrl);
+      const queueUrl = await service.getQueueUrl(queueName);
+      return service.deleteQueue(queueUrl);
     },
   });
 
@@ -73,9 +88,14 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
-      const queueUrl = await sqsService.getQueueUrl(queueName);
-      return sqsService.purgeQueue(queueUrl);
+      const queueUrl = await service.getQueueUrl(queueName);
+      return service.purgeQueue(queueUrl);
     },
   });
 
@@ -89,8 +109,13 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
-      return sqsService.getQueueDetail(queueName);
+      return service.getQueueDetail(queueName);
     },
   });
 
@@ -105,13 +130,18 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request, reply) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
       const { body, delaySeconds, messageAttributes } = request.body as {
         body: string;
         delaySeconds?: number;
         messageAttributes?: Record<string, { DataType: string; StringValue: string }>;
       };
-      const result = await sqsService.sendMessage(queueName, body, delaySeconds, messageAttributes);
+      const result = await service.sendMessage(queueName, body, delaySeconds, messageAttributes);
       return reply.status(201).send(result);
     },
   });
@@ -127,12 +157,17 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
       const { maxMessages, waitTimeSeconds } = request.query as {
         maxMessages?: number;
         waitTimeSeconds?: number;
       };
-      const messages = await sqsService.receiveMessages(queueName, maxMessages, waitTimeSeconds, request.signal);
+      const messages = await service.receiveMessages(queueName, maxMessages, waitTimeSeconds, request.signal);
       return { messages };
     },
   });
@@ -148,9 +183,14 @@ export async function sqsRoutes(app: FastifyInstance, opts: { sqsService: SQSSer
       },
     },
     handler: async (request) => {
+      const clients = request.server.clientCache.getClients(
+        request.localstackConfig.endpoint,
+        request.localstackConfig.region
+      );
+      const service = new SQSService(clients.sqs);
       const { queueName } = request.params as { queueName: string };
       const { receiptHandle } = request.body as { receiptHandle: string };
-      return sqsService.deleteMessage(queueName, receiptHandle);
+      return service.deleteMessage(queueName, receiptHandle);
     },
   });
 }

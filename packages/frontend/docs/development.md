@@ -16,7 +16,7 @@ A `docker-compose.yaml` is provided at the project root with all required servic
 docker compose up -d
 ```
 
-This starts LocalStack with S3, SQS, SNS, IAM, CloudFront, and CloudFormation on `http://localhost:4566`.
+This starts LocalStack with S3, SQS, SNS, IAM, CloudFormation, and DynamoDB on `http://localhost:4566`.
 
 To stop it:
 

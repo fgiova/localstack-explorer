@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudformation": "^3.1018.0",
-    "@aws-sdk/client-cloudfront": "^3.1018.0",
     "@aws-sdk/client-dynamodb": "^3.1018.0",
     "@aws-sdk/client-dynamodb-streams": "^3.1018.0",
     "@aws-sdk/client-iam": "^3.1018.0",

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HardDrive, MessageSquare, Bell, Shield, Globe, Layers } from "lucide-react";
+import { HardDrive, MessageSquare, Bell, Shield, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useEnabledServices } from "@/api/services";
@@ -9,7 +9,6 @@ export const services = [
   { name: "SQS", key: "sqs", path: "/sqs", icon: MessageSquare, description: "Simple Queue Service — Manage message queues", color: "text-blue-600" },
   { name: "SNS", key: "sns", path: "/sns", icon: Bell, description: "Simple Notification Service — Manage topics and subscriptions", color: "text-orange-600" },
   { name: "IAM", key: "iam", path: "/iam", icon: Shield, description: "Identity & Access Management — Manage users, roles, and policies", color: "text-red-600" },
-  { name: "CloudFront", key: "cloudfront", path: "/cloudfront", icon: Globe, description: "Content Delivery Network — Manage distributions", color: "text-purple-600" },
   { name: "CloudFormation", key: "cloudformation", path: "/cloudformation", icon: Layers, description: "Infrastructure as Code — Manage stacks and templates", color: "text-teal-600" },
 ];
 

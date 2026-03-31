@@ -1,6 +1,8 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { EndpointModal } from "@/components/settings/EndpointModal";
+import { ConnectionGuard } from "@/components/settings/ConnectionGuard";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,8 @@ function RootLayout() {
           <Outlet />
         </main>
       </div>
+      <ConnectionGuard />
+      <EndpointModal />
     </div>
   );
 }

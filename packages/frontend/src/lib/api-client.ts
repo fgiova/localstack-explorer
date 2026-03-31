@@ -1,4 +1,14 @@
+import { useConfigStore } from "@/stores/config";
+
 const BASE_URL = "/api";
+
+function getConfigHeaders(): Record<string, string> {
+  const { endpoint, region } = useConfigStore.getState();
+  return {
+    "x-localstack-endpoint": endpoint,
+    "x-localstack-region": region,
+  };
+}
 
 class ApiError extends Error {
   constructor(
@@ -27,14 +37,18 @@ export const apiClient = {
         if (value !== undefined && value !== "") url.searchParams.set(key, value);
       });
     }
-    const response = await fetch(url.toString());
+    const response = await fetch(url.toString(), {
+      headers: { ...getConfigHeaders() },
+    });
     return handleResponse<T>(response);
   },
 
   async post<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "POST",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: body
+        ? { "Content-Type": "application/json", ...getConfigHeaders() }
+        : { ...getConfigHeaders() },
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(response);
@@ -43,7 +57,9 @@ export const apiClient = {
   async put<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "PUT",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: body
+        ? { "Content-Type": "application/json", ...getConfigHeaders() }
+        : { ...getConfigHeaders() },
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(response);
@@ -52,7 +68,9 @@ export const apiClient = {
   async delete<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "DELETE",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: body
+        ? { "Content-Type": "application/json", ...getConfigHeaders() }
+        : { ...getConfigHeaders() },
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(response);
@@ -61,6 +79,7 @@ export const apiClient = {
   async upload<T>(path: string, formData: FormData): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: "POST",
+      headers: { ...getConfigHeaders() },
       body: formData,
     });
     return handleResponse<T>(response);

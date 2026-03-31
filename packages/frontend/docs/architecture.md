@@ -73,7 +73,6 @@ src/
     ├── sqs/              # Scaffold (same structure)
     ├── sns/
     ├── iam/
-    ├── cloudfront/
     └── cloudformation/
 ```
 

@@ -15,13 +15,11 @@ import { Route as SnsIndexRouteImport } from './routes/sns/index'
 import { Route as S3IndexRouteImport } from './routes/s3/index'
 import { Route as IamIndexRouteImport } from './routes/iam/index'
 import { Route as DynamodbIndexRouteImport } from './routes/dynamodb/index'
-import { Route as CloudfrontIndexRouteImport } from './routes/cloudfront/index'
 import { Route as CloudformationIndexRouteImport } from './routes/cloudformation/index'
 import { Route as SqsQueueNameRouteImport } from './routes/sqs/$queueName'
 import { Route as SnsTopicNameRouteImport } from './routes/sns/$topicName'
 import { Route as S3BucketNameRouteImport } from './routes/s3/$bucketName'
 import { Route as DynamodbTableNameRouteImport } from './routes/dynamodb/$tableName'
-import { Route as CloudfrontDistributionIdRouteImport } from './routes/cloudfront/$distributionId'
 import { Route as CloudformationStackNameRouteImport } from './routes/cloudformation/$stackName'
 import { Route as IamUsersUserNameRouteImport } from './routes/iam/users/$userName'
 import { Route as IamPoliciesPolicyArnRouteImport } from './routes/iam/policies/$policyArn'
@@ -57,11 +55,6 @@ const DynamodbIndexRoute = DynamodbIndexRouteImport.update({
   path: '/dynamodb/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CloudfrontIndexRoute = CloudfrontIndexRouteImport.update({
-  id: '/cloudfront/',
-  path: '/cloudfront/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CloudformationIndexRoute = CloudformationIndexRouteImport.update({
   id: '/cloudformation/',
   path: '/cloudformation/',
@@ -87,12 +80,6 @@ const DynamodbTableNameRoute = DynamodbTableNameRouteImport.update({
   path: '/dynamodb/$tableName',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CloudfrontDistributionIdRoute =
-  CloudfrontDistributionIdRouteImport.update({
-    id: '/cloudfront/$distributionId',
-    path: '/cloudfront/$distributionId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const CloudformationStackNameRoute = CloudformationStackNameRouteImport.update({
   id: '/cloudformation/$stackName',
   path: '/cloudformation/$stackName',
@@ -117,13 +104,11 @@ const IamGroupsGroupNameRoute = IamGroupsGroupNameRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cloudformation/$stackName': typeof CloudformationStackNameRoute
-  '/cloudfront/$distributionId': typeof CloudfrontDistributionIdRoute
   '/dynamodb/$tableName': typeof DynamodbTableNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation/': typeof CloudformationIndexRoute
-  '/cloudfront/': typeof CloudfrontIndexRoute
   '/dynamodb/': typeof DynamodbIndexRoute
   '/iam/': typeof IamIndexRoute
   '/s3/': typeof S3IndexRoute
@@ -136,13 +121,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cloudformation/$stackName': typeof CloudformationStackNameRoute
-  '/cloudfront/$distributionId': typeof CloudfrontDistributionIdRoute
   '/dynamodb/$tableName': typeof DynamodbTableNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation': typeof CloudformationIndexRoute
-  '/cloudfront': typeof CloudfrontIndexRoute
   '/dynamodb': typeof DynamodbIndexRoute
   '/iam': typeof IamIndexRoute
   '/s3': typeof S3IndexRoute
@@ -156,13 +139,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cloudformation/$stackName': typeof CloudformationStackNameRoute
-  '/cloudfront/$distributionId': typeof CloudfrontDistributionIdRoute
   '/dynamodb/$tableName': typeof DynamodbTableNameRoute
   '/s3/$bucketName': typeof S3BucketNameRoute
   '/sns/$topicName': typeof SnsTopicNameRoute
   '/sqs/$queueName': typeof SqsQueueNameRoute
   '/cloudformation/': typeof CloudformationIndexRoute
-  '/cloudfront/': typeof CloudfrontIndexRoute
   '/dynamodb/': typeof DynamodbIndexRoute
   '/iam/': typeof IamIndexRoute
   '/s3/': typeof S3IndexRoute
@@ -177,13 +158,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cloudformation/$stackName'
-    | '/cloudfront/$distributionId'
     | '/dynamodb/$tableName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
     | '/cloudformation/'
-    | '/cloudfront/'
     | '/dynamodb/'
     | '/iam/'
     | '/s3/'
@@ -196,13 +175,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cloudformation/$stackName'
-    | '/cloudfront/$distributionId'
     | '/dynamodb/$tableName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
     | '/cloudformation'
-    | '/cloudfront'
     | '/dynamodb'
     | '/iam'
     | '/s3'
@@ -215,13 +192,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cloudformation/$stackName'
-    | '/cloudfront/$distributionId'
     | '/dynamodb/$tableName'
     | '/s3/$bucketName'
     | '/sns/$topicName'
     | '/sqs/$queueName'
     | '/cloudformation/'
-    | '/cloudfront/'
     | '/dynamodb/'
     | '/iam/'
     | '/s3/'
@@ -235,13 +210,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CloudformationStackNameRoute: typeof CloudformationStackNameRoute
-  CloudfrontDistributionIdRoute: typeof CloudfrontDistributionIdRoute
   DynamodbTableNameRoute: typeof DynamodbTableNameRoute
   S3BucketNameRoute: typeof S3BucketNameRoute
   SnsTopicNameRoute: typeof SnsTopicNameRoute
   SqsQueueNameRoute: typeof SqsQueueNameRoute
   CloudformationIndexRoute: typeof CloudformationIndexRoute
-  CloudfrontIndexRoute: typeof CloudfrontIndexRoute
   DynamodbIndexRoute: typeof DynamodbIndexRoute
   IamIndexRoute: typeof IamIndexRoute
   S3IndexRoute: typeof S3IndexRoute
@@ -296,13 +269,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DynamodbIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cloudfront/': {
-      id: '/cloudfront/'
-      path: '/cloudfront'
-      fullPath: '/cloudfront/'
-      preLoaderRoute: typeof CloudfrontIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cloudformation/': {
       id: '/cloudformation/'
       path: '/cloudformation'
@@ -336,13 +302,6 @@ declare module '@tanstack/react-router' {
       path: '/dynamodb/$tableName'
       fullPath: '/dynamodb/$tableName'
       preLoaderRoute: typeof DynamodbTableNameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cloudfront/$distributionId': {
-      id: '/cloudfront/$distributionId'
-      path: '/cloudfront/$distributionId'
-      fullPath: '/cloudfront/$distributionId'
-      preLoaderRoute: typeof CloudfrontDistributionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cloudformation/$stackName': {
@@ -379,13 +338,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CloudformationStackNameRoute: CloudformationStackNameRoute,
-  CloudfrontDistributionIdRoute: CloudfrontDistributionIdRoute,
   DynamodbTableNameRoute: DynamodbTableNameRoute,
   S3BucketNameRoute: S3BucketNameRoute,
   SnsTopicNameRoute: SnsTopicNameRoute,
   SqsQueueNameRoute: SqsQueueNameRoute,
   CloudformationIndexRoute: CloudformationIndexRoute,
-  CloudfrontIndexRoute: CloudfrontIndexRoute,
   DynamodbIndexRoute: DynamodbIndexRoute,
   IamIndexRoute: IamIndexRoute,
   S3IndexRoute: S3IndexRoute,

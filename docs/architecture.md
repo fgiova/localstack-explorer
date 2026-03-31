@@ -11,27 +11,38 @@ This document describes the system design and key architectural decisions in Loc
 │                             │
 │  TanStack Router + Query    │
 │  Zustand · Shadcn/ui        │
+│  ┌────────────────────────┐ │
+│  │ Config Store (per-tab) │ │
+│  │ endpoint + region      │ │
+│  │ → localStorage         │ │
+│  └────────────────────────┘ │
 └──────────┬──────────────────┘
-           │  /api/* (proxy in dev,
-           │         same origin in prod)
+           │  /api/* + headers:
+           │  x-localstack-endpoint
+           │  x-localstack-region
            ▼
 ┌─────────────────────────────┐
 │     Fastify API (:3001)     │
 │                             │
+│  ┌────────────────────────┐ │
+│  │ localstack-config      │ │  ← extracts headers → request.localstackConfig
+│  │ client-cache (LRU)     │ │  ← caches clients per endpoint+region
+│  └────────────────────────┘ │
 │  ┌───────┐ ┌───────┐ ┌──────┐│
 │  │  S3   │ │  SQS  │ │ SNS  ││  ← Fastify plugins
 │  │plugin │ │plugin │ │plugin││
 │  └───┬───┘ └───┬───┘ └──┬───┘│
 │      │         │            │
 │  ┌───▼─────────▼──────┐     │
-│  │  AWS SDK v3 Clients │    │
+│  │  ClientCache        │    │
+│  │  (AWS SDK v3)       │    │
 │  └─────────┬───────────┘    │
 └────────────┼────────────────┘
              │
              ▼
 ┌─────────────────────────────┐
 │   LocalStack (:4566)        │
-│  S3·SQS·SNS·IAM·CF·CFN·DDB │
+│  S3·SQS·SNS·IAM·CFN·DDB    │
 └─────────────────────────────┘
 ```
 
@@ -61,12 +72,17 @@ Every AWS service is encapsulated as a **Fastify plugin** under `src/plugins/`. 
 src/
 ├── index.ts              # Creates server, autoloads plugins
 ├── config.ts             # env-schema validated configuration
-├── aws/clients.ts        # AWS SDK client factories
+├── health.ts             # LocalStack connectivity check
+├── aws/
+│   ├── clients.ts        # AWS SDK client factories (legacy, used by tests)
+│   └── client-cache.ts   # ClientCache — LRU cache of AWS clients per endpoint+region
 ├── shared/
 │   ├── errors.ts         # AppError class, global error handler
 │   └── types.ts          # Shared TypeBox schemas
-└── plugins/              # Auto-discovered by @fastify/autoload
-    ├── s3/               # Complete implementation
+└── plugins/
+    ├── localstack-config.ts  # Extracts x-localstack-endpoint/region headers → request.localstackConfig
+    ├── client-cache.ts       # Registers ClientCache as fastify.clientCache decorator
+    ├── s3/               # Complete implementation (auto-discovered by @fastify/autoload)
     │   ├── index.ts      # Plugin entry (default export async fn)
     │   ├── schemas.ts    # TypeBox input/output schemas
     │   ├── service.ts    # Business logic (AWS SDK calls)
@@ -91,8 +107,7 @@ src/
     │   ├── schemas.ts    # TypeBox schemas for tables, items, indexes, streams, PartiQL
     │   ├── service.ts    # DynamoDBService — table, item, GSI, stream, and PartiQL operations
     │   └── routes.ts     # Table CRUD, item CRUD, batch, GSI, PartiQL, streams
-    ├── iam/              # Scaffold
-    └── cloudfront/       # Scaffold
+    └── iam/              # Scaffold
 ```
 
 > **Important:** Plugin entry points (`index.ts`) must export a plain async function — **not** wrapped with `fastify-plugin`. Autoload needs encapsulation enabled to apply directory-based route prefixes.
@@ -102,12 +117,12 @@ src/
 Each plugin follows a three-layer architecture:
 
 ```
-Route Handler → Service → AWS SDK Client
+Route Handler → Service → AWS SDK Client (from ClientCache)
 ```
 
-- **Routes** handle HTTP concerns: request parsing, validation, status codes, response serialization.
+- **Routes** handle HTTP concerns: request parsing, validation, status codes, response serialization. Each route handler obtains the appropriate AWS clients from `request.server.clientCache.getClients(request.localstackConfig.endpoint, request.localstackConfig.region)` and instantiates the service per-request.
 - **Service** contains business logic: orchestrating AWS SDK calls, mapping responses, handling domain errors.
-- **AWS Client** is injected into the service via the constructor, making the service testable with mocks.
+- **AWS Client** is injected into the service via the constructor, making the service testable with mocks. Clients are obtained per-request from the `ClientCache` based on the endpoint and region headers sent by the frontend.
 
 ### Schema Validation
 
@@ -130,18 +145,18 @@ The `AppError` class is used throughout services to throw domain-specific errors
 
 Environment variables are validated at startup using [env-schema](https://github.com/fastify/env-schema) with `.env` file support (via dotenv). Invalid or missing required variables cause an immediate startup failure with a clear error message.
 
-The `ENABLED_SERVICES` variable controls which service plugins are loaded. The `config.ts` module parses the comma-separated value into a typed array of `ServiceName` values, which is then used by `index.ts` to build a `matchFilter` for `@fastify/autoload`. A dedicated endpoint (`GET /api/services`) exposes the enabled list so the frontend can adapt its UI.
+The `ENABLED_SERVICES` variable controls which service plugins are loaded. The `config.ts` module parses the comma-separated value into a typed array of `ServiceName` values, which is then used by `index.ts` to build a `matchFilter` for `@fastify/autoload`. A dedicated endpoint (`GET /api/services`) exposes the enabled list, `defaultEndpoint`, and `defaultRegion` so the frontend can adapt its UI and initialize with the server-configured values.
 
 ### AWS Client Configuration
 
-All clients share a common configuration pointing to LocalStack:
+AWS SDK clients are managed by the `ClientCache` (`aws/client-cache.ts`), which caches clients per endpoint+region pair with LRU eviction (max 20 entries). All clients share:
 
-- **Endpoint**: `LOCALSTACK_ENDPOINT` environment variable (default `http://localhost:4566`)
-- **Region**: `us-east-1`
+- **Endpoint**: determined per-request from `x-localstack-endpoint` header (default: `LOCALSTACK_ENDPOINT` env var)
+- **Region**: determined per-request from `x-localstack-region` header (default: `LOCALSTACK_REGION` env var)
 - **Credentials**: `test` / `test` (LocalStack dummy credentials)
 - **S3 special**: `forcePathStyle: true` (required for LocalStack S3)
 
-Client factories in `aws/clients.ts` centralize this configuration.
+This per-client architecture allows multiple browser tabs to connect to different LocalStack instances (different endpoints and/or regions) simultaneously. The `localstack-config` plugin extracts headers on every request and the `client-cache` plugin provides cached clients to avoid recreating them on each call.
 
 ## Frontend Architecture
 
@@ -153,7 +168,9 @@ main.tsx
       └── RouterProvider
            └── __root.tsx (Layout)
                 ├── Sidebar
-                ├── Header (breadcrumbs)
+                ├── Header (breadcrumbs, RegionSelector, ConnectionIndicator)
+                ├── EndpointModal (controlled by config store)
+                ├── ConnectionGuard (auto-opens modal on unreachable endpoint)
                 └── <Outlet /> (page content)
                      ├── index.tsx (Dashboard)
                      ├── s3/index.tsx (BucketList)
@@ -185,7 +202,10 @@ All query hooks are in `src/api/<service>.ts`, one file per service.
 
 ### State Management
 
-[Zustand](https://zustand-demo.pmnd.rs/) handles client-side UI state that is not tied to server data. Currently it manages sidebar open/closed state. The store is in `src/stores/app.ts`.
+[Zustand](https://zustand-demo.pmnd.rs/) handles client-side UI state that is not tied to server data:
+
+- **`src/stores/app.ts`** — sidebar open/closed state
+- **`src/stores/config.ts`** — LocalStack endpoint, region, and a `userConfigured` flag (all three persisted to `localStorage`), plus ephemeral endpoint modal UI state. On first load, if `userConfigured` is `false`, the store applies server defaults (`defaultEndpoint` and `defaultRegion` from `GET /api/services`) via `applyServerDefaults()` — this reflects the `LOCALSTACK_ENDPOINT`/`LOCALSTACK_REGION` env vars without marking the user as having configured manually. Once the user explicitly changes endpoint or region via the UI, `userConfigured` becomes `true` and server defaults are no longer applied. Each browser tab has its own in-memory state initialized from `localStorage`, allowing tabs to diverge independently.
 
 ### API Client
 
@@ -195,6 +215,7 @@ A thin fetch wrapper in `src/lib/api-client.ts` provides typed methods (`get`, `
 - Query parameter handling
 - Error normalization via `ApiError` class
 - FormData support for file uploads
+- Automatic injection of `x-localstack-endpoint` and `x-localstack-region` headers from the config store on every request
 
 The client uses `/api` as the base URL, which the Vite dev server proxies to the backend.
 
@@ -204,6 +225,7 @@ The component library is built on [Shadcn/ui](https://ui.shadcn.com/) (Radix UI 
 
 - **Primitive components** (`src/components/ui/`) — Button, Dialog, Table, Input, Card, Badge, Breadcrumb, etc. These are copied into the project (not imported from a package) for full customization control.
 - **Layout components** (`src/components/layout/`) — Sidebar and Header, shared across all pages.
+- **Settings components** (`src/components/settings/`) — `RegionSelector` (dropdown in header), `EndpointModal` (connection dialog), `ConnectionGuard` (auto-open logic).
 - **Feature components** (`src/components/<service>/`) — Service-specific components like `BucketList`, `ObjectBrowser`.
 
 Styling uses **Tailwind CSS v4** with CSS custom properties for theming. The `cn()` utility (clsx + tailwind-merge) handles conditional class composition.
@@ -217,11 +239,14 @@ A typical read operation (e.g., listing S3 buckets):
 2. TanStack Router renders BucketList component
 3. BucketList calls useListBuckets() hook
 4. React Query checks cache → if stale, fires GET /api/s3
+   → api-client injects x-localstack-endpoint + x-localstack-region headers from config store
 5. Vite proxy forwards to localhost:3001/api/s3
-6. Fastify matches the route in the S3 plugin
-7. Route handler calls s3Service.listBuckets()
-8. S3Service sends ListBucketsCommand to LocalStack via AWS SDK
-9. Response flows back: SDK → Service → Route → HTTP → React Query → Component
+6. localstack-config plugin extracts headers → request.localstackConfig
+7. Fastify matches the route in the S3 plugin
+8. Route handler gets S3Client from clientCache.getClients(endpoint, region)
+9. Route handler creates S3Service with the client and calls listBuckets()
+10. S3Service sends ListBucketsCommand to the target LocalStack via AWS SDK
+11. Response flows back: SDK → Service → Route → HTTP → React Query → Component
 ```
 
 A typical write operation (e.g., deleting a bucket):

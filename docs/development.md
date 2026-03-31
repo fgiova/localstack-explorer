@@ -16,7 +16,7 @@ A `docker-compose.yaml` is provided at the project root with all required servic
 docker compose up -d
 ```
 
-This starts LocalStack with S3, SQS, SNS, IAM, CloudFront, and CloudFormation on `http://localhost:4566`.
+This starts LocalStack with S3, SQS, SNS, IAM, CloudFormation, and DynamoDB on `http://localhost:4566`.
 
 To stop it:
 
@@ -59,7 +59,9 @@ LOCALSTACK_REGION=us-east-1
 ENABLED_SERVICES=s3,sqs,sns,iam,cloudformation
 ```
 
-The `ENABLED_SERVICES` variable accepts a comma-separated list of service names. Only the listed services will have their backend routes registered and their UI visible in the dashboard and sidebar. Available values: `s3`, `sqs`, `sns`, `iam`, `cloudfront`, `cloudformation`.
+The `ENABLED_SERVICES` variable accepts a comma-separated list of service names. Only the listed services will have their backend routes registered and their UI visible in the dashboard and sidebar. Available values: `s3`, `sqs`, `sns`, `iam`, `cloudformation`, `dynamodb`.
+
+`LOCALSTACK_ENDPOINT` and `LOCALSTACK_REGION` are exposed to the frontend via `GET /api/services` as `defaultEndpoint` and `defaultRegion`. On first load (before the user has ever changed settings), the frontend applies these server defaults automatically. Once the user explicitly changes endpoint or region from the UI, those user-chosen values take precedence. Each tab stores its own settings in `localStorage` and can connect to a different LocalStack instance independently.
 
 ### Route Generation
 

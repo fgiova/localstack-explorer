@@ -182,7 +182,7 @@ No manual plugin registration is needed — `@fastify/autoload` discovers the ne
 Add the service name to the `ALL_SERVICES` array in `packages/backend/src/config.ts`:
 
 ```typescript
-const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudfront", "cloudformation", "lambda"] as const;
+const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudformation", "lambda"] as const;
 ```
 
 Then update the default value of `ENABLED_SERVICES` in the config schema if the new service should be enabled by default:
@@ -303,4 +303,4 @@ The `key` field is critical: the frontend fetches the list of enabled services f
 
 ## Reference
 
-Use the [S3 plugin](../packages/backend/src/plugins/s3/), the [SQS plugin](../packages/backend/src/plugins/sqs/), the [SNS plugin](../packages/backend/src/plugins/sns/), the [CloudFormation plugin](../packages/backend/src/plugins/cloudformation/), or the [DynamoDB plugin](../packages/backend/src/plugins/dynamodb/) as reference implementations. All five are complete and follow the same four-file plugin structure (`index.ts`, `schemas.ts`, `service.ts`, `routes.ts`). The SNS plugin is a particularly good reference for services with sub-resources (subscriptions), tag management, and batch operations. The CloudFormation plugin is a good reference for services with tabbed detail views, Monaco editor integration, and cross-service resource navigation. The DynamoDB plugin is a good reference for services with multiple AWS SDK clients (DynamoDBClient, DynamoDBDocumentClient, DynamoDBStreamsClient), complex query building, batch operations with automatic chunking, and a multi-tab detail page with seven feature areas. Scaffold services (IAM, CloudFront) provide the minimal skeleton as a starting template.
+Use the [S3 plugin](../packages/backend/src/plugins/s3/), the [SQS plugin](../packages/backend/src/plugins/sqs/), the [SNS plugin](../packages/backend/src/plugins/sns/), the [CloudFormation plugin](../packages/backend/src/plugins/cloudformation/), or the [DynamoDB plugin](../packages/backend/src/plugins/dynamodb/) as reference implementations. All five are complete and follow the same four-file plugin structure (`index.ts`, `schemas.ts`, `service.ts`, `routes.ts`). The SNS plugin is a particularly good reference for services with sub-resources (subscriptions), tag management, and batch operations. The CloudFormation plugin is a good reference for services with tabbed detail views, Monaco editor integration, and cross-service resource navigation. The DynamoDB plugin is a good reference for services with multiple AWS SDK clients (DynamoDBClient, DynamoDBDocumentClient, DynamoDBStreamsClient), complex query building, batch operations with automatic chunking, and a multi-tab detail page with seven feature areas. The IAM scaffold provides the minimal skeleton as a starting template.

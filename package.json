@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "pnpm -r --parallel run dev",
-		"build": "pnpm -r run build",
+		"build": "pnpm build:bundle && pnpm build:standalone && pnpm build:desktop",
 		"build:bundle": "rm -rf bundle && pnpm --filter @localstack-explorer/frontend run build:bundle && pnpm --filter @localstack-explorer/backend run build:bundle",
 		"build:standalone": "pnpm --filter @localstack-explorer/backend run build && pnpm --filter @localstack-explorer/frontend run build --outDir ../backend/dist/public --emptyOutDir",
 		"start": "node packages/backend/dist/index.js",
