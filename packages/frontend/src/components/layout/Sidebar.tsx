@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { HardDrive, MessageSquare, Bell, Shield, Layers, Database, ChevronLeft } from "lucide-react";
+import { HardDrive, MessageSquare, Bell, Shield, Layers, Database, ChevronLeft, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,22 @@ export function Sidebar() {
           );
         })}
       </nav>
+      <div className="absolute bottom-0 left-0 right-0 border-t p-3">
+        <a
+          href="https://github.com/fgiova/localstack-explorer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-sidebar-foreground transition-colors"
+        >
+          <Github className="h-4 w-4 shrink-0" />
+          {sidebarOpen && <span>GitHub</span>}
+        </a>
+        {sidebarOpen && (
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            &copy; {new Date().getFullYear()} Francesco Giovannini
+          </p>
+        )}
+      </div>
     </aside>
   );
 }
