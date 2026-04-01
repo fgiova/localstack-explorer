@@ -4,29 +4,29 @@ import { apiClient } from "@/lib/api-client";
 import { useConfigStore } from "@/stores/config";
 
 interface ServicesResponse {
-  services: string[];
-  defaultEndpoint: string;
-  defaultRegion: string;
+	services: string[];
+	defaultEndpoint: string;
+	defaultRegion: string;
 }
 
 let defaultsApplied = false;
 
 export function useEnabledServices() {
-  const query = useQuery({
-    queryKey: ["services"],
-    queryFn: () => apiClient.get<ServicesResponse>("/services"),
-    staleTime: Infinity,
-  });
+	const query = useQuery({
+		queryKey: ["services"],
+		queryFn: () => apiClient.get<ServicesResponse>("/services"),
+		staleTime: Infinity,
+	});
 
-  useEffect(() => {
-    if (!query.data || defaultsApplied) return;
-    defaultsApplied = true;
+	useEffect(() => {
+		if (!query.data || defaultsApplied) return;
+		defaultsApplied = true;
 
-    const { userConfigured, applyServerDefaults } = useConfigStore.getState();
-    if (!userConfigured) {
-      applyServerDefaults(query.data.defaultEndpoint, query.data.defaultRegion);
-    }
-  }, [query.data]);
+		const { userConfigured, applyServerDefaults } = useConfigStore.getState();
+		if (!userConfigured) {
+			applyServerDefaults(query.data.defaultEndpoint, query.data.defaultRegion);
+		}
+	}, [query.data]);
 
-  return query;
+	return query;
 }

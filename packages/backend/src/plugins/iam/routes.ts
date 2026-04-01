@@ -1,811 +1,874 @@
 import type { FastifyInstance } from "fastify";
-import { IAMService } from "./service.js";
-import {
-  UserListResponseSchema,
-  CreateUserBodySchema,
-  UserDetailSchema,
-  AccessKeyListResponseSchema,
-  CreateAccessKeyResponseSchema,
-  UpdateAccessKeyBodySchema,
-  InlinePolicyNameListResponseSchema,
-  InlinePolicyDetailSchema,
-  PutInlinePolicyBodySchema,
-  AttachedPolicyListResponseSchema,
-  AttachPolicyBodySchema,
-  GroupListResponseSchema,
-  CreateGroupBodySchema,
-  GroupDetailResponseSchema,
-  AddUserToGroupBodySchema,
-  ManagedPolicyListResponseSchema,
-  ManagedPolicyDetailSchema,
-  CreateManagedPolicyBodySchema,
-  PolicyVersionSchema,
-  PolicyVersionListResponseSchema,
-  CreatePolicyVersionBodySchema,
-  MessageResponseSchema,
-  DeleteResponseSchema,
-} from "./schemas.js";
 import { ErrorResponseSchema } from "../../shared/types.js";
+import {
+	AccessKeyListResponseSchema,
+	AddUserToGroupBodySchema,
+	AttachedPolicyListResponseSchema,
+	AttachPolicyBodySchema,
+	CreateAccessKeyResponseSchema,
+	CreateGroupBodySchema,
+	CreateManagedPolicyBodySchema,
+	CreatePolicyVersionBodySchema,
+	CreateUserBodySchema,
+	DeleteResponseSchema,
+	GroupDetailResponseSchema,
+	GroupListResponseSchema,
+	InlinePolicyDetailSchema,
+	InlinePolicyNameListResponseSchema,
+	ManagedPolicyDetailSchema,
+	ManagedPolicyListResponseSchema,
+	MessageResponseSchema,
+	PolicyVersionListResponseSchema,
+	PolicyVersionSchema,
+	PutInlinePolicyBodySchema,
+	UpdateAccessKeyBodySchema,
+	UserDetailSchema,
+	UserListResponseSchema,
+} from "./schemas.js";
+import { IAMService } from "./service.js";
 
 export async function iamRoutes(app: FastifyInstance) {
-  // ── User Routes ──────────────────────────────────────────────────────
+	// ── User Routes ──────────────────────────────────────────────────────
 
-  // List users
-  app.get("/users", {
-    schema: {
-      response: {
-        200: UserListResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      return service.listUsers();
-    },
-  });
+	// List users
+	app.get("/users", {
+		schema: {
+			response: {
+				200: UserListResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			return service.listUsers();
+		},
+	});
 
-  // Create user
-  app.post("/users", {
-    schema: {
-      body: CreateUserBodySchema,
-      response: {
-        201: MessageResponseSchema,
-        400: ErrorResponseSchema,
-      },
-    },
-    handler: async (request, reply) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, path } = request.body as { userName: string; path?: string };
-      const result = await service.createUser(userName, path);
-      return reply.status(201).send(result);
-    },
-  });
+	// Create user
+	app.post("/users", {
+		schema: {
+			body: CreateUserBodySchema,
+			response: {
+				201: MessageResponseSchema,
+				400: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, path } = request.body as {
+				userName: string;
+				path?: string;
+			};
+			const result = await service.createUser(userName, path);
+			return reply.status(201).send(result);
+		},
+	});
 
-  // Get user
-  app.get("/users/:userName", {
-    schema: {
-      response: {
-        200: UserDetailSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.getUser(userName);
-    },
-  });
+	// Get user
+	app.get("/users/:userName", {
+		schema: {
+			response: {
+				200: UserDetailSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.getUser(userName);
+		},
+	});
 
-  // Delete user
-  app.delete("/users/:userName", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.deleteUser(userName);
-    },
-  });
+	// Delete user
+	app.delete("/users/:userName", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.deleteUser(userName);
+		},
+	});
 
-  // ── Access Key Routes ────────────────────────────────────────────────
+	// ── Access Key Routes ────────────────────────────────────────────────
 
-  // List access keys
-  app.get("/users/:userName/access-keys", {
-    schema: {
-      response: {
-        200: AccessKeyListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.listAccessKeys(userName);
-    },
-  });
+	// List access keys
+	app.get("/users/:userName/access-keys", {
+		schema: {
+			response: {
+				200: AccessKeyListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.listAccessKeys(userName);
+		},
+	});
 
-  // Create access key
-  app.post("/users/:userName/access-keys", {
-    schema: {
-      response: {
-        201: CreateAccessKeyResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request, reply) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      const result = await service.createAccessKey(userName);
-      return reply.status(201).send(result);
-    },
-  });
+	// Create access key
+	app.post("/users/:userName/access-keys", {
+		schema: {
+			response: {
+				201: CreateAccessKeyResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			const result = await service.createAccessKey(userName);
+			return reply.status(201).send(result);
+		},
+	});
 
-  // Delete access key
-  app.delete("/users/:userName/access-keys/:accessKeyId", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, accessKeyId } = request.params as { userName: string; accessKeyId: string };
-      return service.deleteAccessKey(userName, accessKeyId);
-    },
-  });
+	// Delete access key
+	app.delete("/users/:userName/access-keys/:accessKeyId", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, accessKeyId } = request.params as {
+				userName: string;
+				accessKeyId: string;
+			};
+			return service.deleteAccessKey(userName, accessKeyId);
+		},
+	});
 
-  // Update access key
-  app.put("/users/:userName/access-keys/:accessKeyId", {
-    schema: {
-      body: UpdateAccessKeyBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, accessKeyId } = request.params as { userName: string; accessKeyId: string };
-      const { status } = request.body as { status: "Active" | "Inactive" };
-      return service.updateAccessKey(userName, accessKeyId, status);
-    },
-  });
+	// Update access key
+	app.put("/users/:userName/access-keys/:accessKeyId", {
+		schema: {
+			body: UpdateAccessKeyBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, accessKeyId } = request.params as {
+				userName: string;
+				accessKeyId: string;
+			};
+			const { status } = request.body as { status: "Active" | "Inactive" };
+			return service.updateAccessKey(userName, accessKeyId, status);
+		},
+	});
 
-  // ── User Inline Policy Routes ────────────────────────────────────────
+	// ── User Inline Policy Routes ────────────────────────────────────────
 
-  // List user inline policies
-  app.get("/users/:userName/inline-policies", {
-    schema: {
-      response: {
-        200: InlinePolicyNameListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.listUserPolicies(userName);
-    },
-  });
+	// List user inline policies
+	app.get("/users/:userName/inline-policies", {
+		schema: {
+			response: {
+				200: InlinePolicyNameListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.listUserPolicies(userName);
+		},
+	});
 
-  // Get user inline policy
-  app.get("/users/:userName/inline-policies/:policyName", {
-    schema: {
-      response: {
-        200: InlinePolicyDetailSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, policyName } = request.params as { userName: string; policyName: string };
-      return service.getUserPolicy(userName, policyName);
-    },
-  });
+	// Get user inline policy
+	app.get("/users/:userName/inline-policies/:policyName", {
+		schema: {
+			response: {
+				200: InlinePolicyDetailSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, policyName } = request.params as {
+				userName: string;
+				policyName: string;
+			};
+			return service.getUserPolicy(userName, policyName);
+		},
+	});
 
-  // Put user inline policy
-  app.put("/users/:userName/inline-policies/:policyName", {
-    schema: {
-      body: PutInlinePolicyBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, policyName } = request.params as { userName: string; policyName: string };
-      const { policyDocument } = request.body as { policyDocument: string };
-      return service.putUserPolicy(userName, policyName, policyDocument);
-    },
-  });
+	// Put user inline policy
+	app.put("/users/:userName/inline-policies/:policyName", {
+		schema: {
+			body: PutInlinePolicyBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, policyName } = request.params as {
+				userName: string;
+				policyName: string;
+			};
+			const { policyDocument } = request.body as { policyDocument: string };
+			return service.putUserPolicy(userName, policyName, policyDocument);
+		},
+	});
 
-  // Delete user inline policy
-  app.delete("/users/:userName/inline-policies/:policyName", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, policyName } = request.params as { userName: string; policyName: string };
-      return service.deleteUserPolicy(userName, policyName);
-    },
-  });
+	// Delete user inline policy
+	app.delete("/users/:userName/inline-policies/:policyName", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, policyName } = request.params as {
+				userName: string;
+				policyName: string;
+			};
+			return service.deleteUserPolicy(userName, policyName);
+		},
+	});
 
-  // ── User Attached Policy Routes ──────────────────────────────────────
+	// ── User Attached Policy Routes ──────────────────────────────────────
 
-  // List attached user policies
-  app.get("/users/:userName/attached-policies", {
-    schema: {
-      response: {
-        200: AttachedPolicyListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.listAttachedUserPolicies(userName);
-    },
-  });
+	// List attached user policies
+	app.get("/users/:userName/attached-policies", {
+		schema: {
+			response: {
+				200: AttachedPolicyListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.listAttachedUserPolicies(userName);
+		},
+	});
 
-  // Attach policy to user
-  app.post("/users/:userName/attached-policies", {
-    schema: {
-      body: AttachPolicyBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      const { policyArn } = request.body as { policyArn: string };
-      return service.attachUserPolicy(userName, policyArn);
-    },
-  });
+	// Attach policy to user
+	app.post("/users/:userName/attached-policies", {
+		schema: {
+			body: AttachPolicyBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			const { policyArn } = request.body as { policyArn: string };
+			return service.attachUserPolicy(userName, policyArn);
+		},
+	});
 
-  // Detach policy from user
-  app.delete("/users/:userName/attached-policies/:policyArn", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName, policyArn } = request.params as { userName: string; policyArn: string };
-      return service.detachUserPolicy(userName, decodeURIComponent(policyArn));
-    },
-  });
+	// Detach policy from user
+	app.delete("/users/:userName/attached-policies/:policyArn", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName, policyArn } = request.params as {
+				userName: string;
+				policyArn: string;
+			};
+			return service.detachUserPolicy(userName, decodeURIComponent(policyArn));
+		},
+	});
 
-  // ── User Groups Route ────────────────────────────────────────────────
+	// ── User Groups Route ────────────────────────────────────────────────
 
-  // List groups for user
-  app.get("/users/:userName/groups", {
-    schema: {
-      response: {
-        200: GroupListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { userName } = request.params as { userName: string };
-      return service.listGroupsForUser(userName);
-    },
-  });
+	// List groups for user
+	app.get("/users/:userName/groups", {
+		schema: {
+			response: {
+				200: GroupListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { userName } = request.params as { userName: string };
+			return service.listGroupsForUser(userName);
+		},
+	});
 
-  // ── Group Routes ─────────────────────────────────────────────────────
+	// ── Group Routes ─────────────────────────────────────────────────────
 
-  // List groups
-  app.get("/groups", {
-    schema: {
-      response: {
-        200: GroupListResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      return service.listGroups();
-    },
-  });
+	// List groups
+	app.get("/groups", {
+		schema: {
+			response: {
+				200: GroupListResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			return service.listGroups();
+		},
+	});
 
-  // Create group
-  app.post("/groups", {
-    schema: {
-      body: CreateGroupBodySchema,
-      response: {
-        201: MessageResponseSchema,
-        400: ErrorResponseSchema,
-      },
-    },
-    handler: async (request, reply) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, path } = request.body as { groupName: string; path?: string };
-      const result = await service.createGroup(groupName, path);
-      return reply.status(201).send(result);
-    },
-  });
+	// Create group
+	app.post("/groups", {
+		schema: {
+			body: CreateGroupBodySchema,
+			response: {
+				201: MessageResponseSchema,
+				400: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, path } = request.body as {
+				groupName: string;
+				path?: string;
+			};
+			const result = await service.createGroup(groupName, path);
+			return reply.status(201).send(result);
+		},
+	});
 
-  // Get group
-  app.get("/groups/:groupName", {
-    schema: {
-      response: {
-        200: GroupDetailResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      return service.getGroup(groupName);
-    },
-  });
+	// Get group
+	app.get("/groups/:groupName", {
+		schema: {
+			response: {
+				200: GroupDetailResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			return service.getGroup(groupName);
+		},
+	});
 
-  // Delete group
-  app.delete("/groups/:groupName", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      return service.deleteGroup(groupName);
-    },
-  });
+	// Delete group
+	app.delete("/groups/:groupName", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			return service.deleteGroup(groupName);
+		},
+	});
 
-  // ── Group Membership Routes ──────────────────────────────────────────
+	// ── Group Membership Routes ──────────────────────────────────────────
 
-  // Add user to group
-  app.post("/groups/:groupName/members", {
-    schema: {
-      body: AddUserToGroupBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      const { userName } = request.body as { userName: string };
-      return service.addUserToGroup(groupName, userName);
-    },
-  });
+	// Add user to group
+	app.post("/groups/:groupName/members", {
+		schema: {
+			body: AddUserToGroupBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			const { userName } = request.body as { userName: string };
+			return service.addUserToGroup(groupName, userName);
+		},
+	});
 
-  // Remove user from group
-  app.delete("/groups/:groupName/members/:userName", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, userName } = request.params as { groupName: string; userName: string };
-      return service.removeUserFromGroup(groupName, userName);
-    },
-  });
+	// Remove user from group
+	app.delete("/groups/:groupName/members/:userName", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, userName } = request.params as {
+				groupName: string;
+				userName: string;
+			};
+			return service.removeUserFromGroup(groupName, userName);
+		},
+	});
 
-  // ── Group Inline Policy Routes ───────────────────────────────────────
+	// ── Group Inline Policy Routes ───────────────────────────────────────
 
-  // List group inline policies
-  app.get("/groups/:groupName/inline-policies", {
-    schema: {
-      response: {
-        200: InlinePolicyNameListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      return service.listGroupPolicies(groupName);
-    },
-  });
+	// List group inline policies
+	app.get("/groups/:groupName/inline-policies", {
+		schema: {
+			response: {
+				200: InlinePolicyNameListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			return service.listGroupPolicies(groupName);
+		},
+	});
 
-  // Get group inline policy
-  app.get("/groups/:groupName/inline-policies/:policyName", {
-    schema: {
-      response: {
-        200: InlinePolicyDetailSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, policyName } = request.params as { groupName: string; policyName: string };
-      return service.getGroupPolicy(groupName, policyName);
-    },
-  });
+	// Get group inline policy
+	app.get("/groups/:groupName/inline-policies/:policyName", {
+		schema: {
+			response: {
+				200: InlinePolicyDetailSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, policyName } = request.params as {
+				groupName: string;
+				policyName: string;
+			};
+			return service.getGroupPolicy(groupName, policyName);
+		},
+	});
 
-  // Put group inline policy
-  app.put("/groups/:groupName/inline-policies/:policyName", {
-    schema: {
-      body: PutInlinePolicyBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, policyName } = request.params as { groupName: string; policyName: string };
-      const { policyDocument } = request.body as { policyDocument: string };
-      return service.putGroupPolicy(groupName, policyName, policyDocument);
-    },
-  });
+	// Put group inline policy
+	app.put("/groups/:groupName/inline-policies/:policyName", {
+		schema: {
+			body: PutInlinePolicyBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, policyName } = request.params as {
+				groupName: string;
+				policyName: string;
+			};
+			const { policyDocument } = request.body as { policyDocument: string };
+			return service.putGroupPolicy(groupName, policyName, policyDocument);
+		},
+	});
 
-  // Delete group inline policy
-  app.delete("/groups/:groupName/inline-policies/:policyName", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, policyName } = request.params as { groupName: string; policyName: string };
-      return service.deleteGroupPolicy(groupName, policyName);
-    },
-  });
+	// Delete group inline policy
+	app.delete("/groups/:groupName/inline-policies/:policyName", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, policyName } = request.params as {
+				groupName: string;
+				policyName: string;
+			};
+			return service.deleteGroupPolicy(groupName, policyName);
+		},
+	});
 
-  // ── Group Attached Policy Routes ─────────────────────────────────────
+	// ── Group Attached Policy Routes ─────────────────────────────────────
 
-  // List attached group policies
-  app.get("/groups/:groupName/attached-policies", {
-    schema: {
-      response: {
-        200: AttachedPolicyListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      return service.listAttachedGroupPolicies(groupName);
-    },
-  });
+	// List attached group policies
+	app.get("/groups/:groupName/attached-policies", {
+		schema: {
+			response: {
+				200: AttachedPolicyListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			return service.listAttachedGroupPolicies(groupName);
+		},
+	});
 
-  // Attach policy to group
-  app.post("/groups/:groupName/attached-policies", {
-    schema: {
-      body: AttachPolicyBodySchema,
-      response: {
-        200: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName } = request.params as { groupName: string };
-      const { policyArn } = request.body as { policyArn: string };
-      return service.attachGroupPolicy(groupName, policyArn);
-    },
-  });
+	// Attach policy to group
+	app.post("/groups/:groupName/attached-policies", {
+		schema: {
+			body: AttachPolicyBodySchema,
+			response: {
+				200: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName } = request.params as { groupName: string };
+			const { policyArn } = request.body as { policyArn: string };
+			return service.attachGroupPolicy(groupName, policyArn);
+		},
+	});
 
-  // Detach policy from group
-  app.delete("/groups/:groupName/attached-policies/:policyArn", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { groupName, policyArn } = request.params as { groupName: string; policyArn: string };
-      return service.detachGroupPolicy(groupName, decodeURIComponent(policyArn));
-    },
-  });
+	// Detach policy from group
+	app.delete("/groups/:groupName/attached-policies/:policyArn", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { groupName, policyArn } = request.params as {
+				groupName: string;
+				policyArn: string;
+			};
+			return service.detachGroupPolicy(
+				groupName,
+				decodeURIComponent(policyArn),
+			);
+		},
+	});
 
-  // ── Managed Policy Routes ────────────────────────────────────────────
+	// ── Managed Policy Routes ────────────────────────────────────────────
 
-  // List managed policies
-  app.get("/policies", {
-    schema: {
-      response: {
-        200: ManagedPolicyListResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { scope } = request.query as { scope?: string };
-      return service.listManagedPolicies(scope);
-    },
-  });
+	// List managed policies
+	app.get("/policies", {
+		schema: {
+			response: {
+				200: ManagedPolicyListResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { scope } = request.query as { scope?: string };
+			return service.listManagedPolicies(scope);
+		},
+	});
 
-  // Create managed policy
-  app.post("/policies", {
-    schema: {
-      body: CreateManagedPolicyBodySchema,
-      response: {
-        201: MessageResponseSchema,
-        400: ErrorResponseSchema,
-      },
-    },
-    handler: async (request, reply) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyName, policyDocument, description, path } = request.body as {
-        policyName: string;
-        policyDocument: string;
-        description?: string;
-        path?: string;
-      };
-      const result = await service.createPolicy(policyName, policyDocument, description, path);
-      return reply.status(201).send(result);
-    },
-  });
+	// Create managed policy
+	app.post("/policies", {
+		schema: {
+			body: CreateManagedPolicyBodySchema,
+			response: {
+				201: MessageResponseSchema,
+				400: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyName, policyDocument, description, path } =
+				request.body as {
+					policyName: string;
+					policyDocument: string;
+					description?: string;
+					path?: string;
+				};
+			const result = await service.createPolicy(
+				policyName,
+				policyDocument,
+				description,
+				path,
+			);
+			return reply.status(201).send(result);
+		},
+	});
 
-  // Get managed policy
-  app.get("/policies/:policyArn", {
-    schema: {
-      response: {
-        200: ManagedPolicyDetailSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn } = request.params as { policyArn: string };
-      return service.getPolicy(decodeURIComponent(policyArn));
-    },
-  });
+	// Get managed policy
+	app.get("/policies/:policyArn", {
+		schema: {
+			response: {
+				200: ManagedPolicyDetailSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn } = request.params as { policyArn: string };
+			return service.getPolicy(decodeURIComponent(policyArn));
+		},
+	});
 
-  // Delete managed policy
-  app.delete("/policies/:policyArn", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn } = request.params as { policyArn: string };
-      return service.deletePolicy(decodeURIComponent(policyArn));
-    },
-  });
+	// Delete managed policy
+	app.delete("/policies/:policyArn", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn } = request.params as { policyArn: string };
+			return service.deletePolicy(decodeURIComponent(policyArn));
+		},
+	});
 
-  // Get policy document
-  app.get("/policies/:policyArn/document", {
-    schema: {
-      response: {
-        200: PolicyVersionSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn } = request.params as { policyArn: string };
-      const { versionId } = request.query as { versionId?: string };
-      return service.getPolicyDocument(decodeURIComponent(policyArn), versionId);
-    },
-  });
+	// Get policy document
+	app.get("/policies/:policyArn/document", {
+		schema: {
+			response: {
+				200: PolicyVersionSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn } = request.params as { policyArn: string };
+			const { versionId } = request.query as { versionId?: string };
+			return service.getPolicyDocument(
+				decodeURIComponent(policyArn),
+				versionId,
+			);
+		},
+	});
 
-  // ── Policy Version Routes ────────────────────────────────────────────
+	// ── Policy Version Routes ────────────────────────────────────────────
 
-  // List policy versions
-  app.get("/policies/:policyArn/versions", {
-    schema: {
-      response: {
-        200: PolicyVersionListResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn } = request.params as { policyArn: string };
-      return service.listPolicyVersions(decodeURIComponent(policyArn));
-    },
-  });
+	// List policy versions
+	app.get("/policies/:policyArn/versions", {
+		schema: {
+			response: {
+				200: PolicyVersionListResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn } = request.params as { policyArn: string };
+			return service.listPolicyVersions(decodeURIComponent(policyArn));
+		},
+	});
 
-  // Create policy version
-  app.post("/policies/:policyArn/versions", {
-    schema: {
-      body: CreatePolicyVersionBodySchema,
-      response: {
-        201: MessageResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request, reply) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn } = request.params as { policyArn: string };
-      const { policyDocument, setAsDefault } = request.body as {
-        policyDocument: string;
-        setAsDefault: boolean;
-      };
-      const result = await service.createPolicyVersion(
-        decodeURIComponent(policyArn),
-        policyDocument,
-        setAsDefault,
-      );
-      return reply.status(201).send(result);
-    },
-  });
+	// Create policy version
+	app.post("/policies/:policyArn/versions", {
+		schema: {
+			body: CreatePolicyVersionBodySchema,
+			response: {
+				201: MessageResponseSchema,
+				400: ErrorResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn } = request.params as { policyArn: string };
+			const { policyDocument, setAsDefault } = request.body as {
+				policyDocument: string;
+				setAsDefault: boolean;
+			};
+			const result = await service.createPolicyVersion(
+				decodeURIComponent(policyArn),
+				policyDocument,
+				setAsDefault,
+			);
+			return reply.status(201).send(result);
+		},
+	});
 
-  // Delete policy version
-  app.delete("/policies/:policyArn/versions/:versionId", {
-    schema: {
-      response: {
-        200: DeleteResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn, versionId } = request.params as { policyArn: string; versionId: string };
-      return service.deletePolicyVersion(decodeURIComponent(policyArn), versionId);
-    },
-  });
+	// Delete policy version
+	app.delete("/policies/:policyArn/versions/:versionId", {
+		schema: {
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn, versionId } = request.params as {
+				policyArn: string;
+				versionId: string;
+			};
+			return service.deletePolicyVersion(
+				decodeURIComponent(policyArn),
+				versionId,
+			);
+		},
+	});
 
-  // Set default policy version
-  app.put("/policies/:policyArn/versions/:versionId/default", {
-    schema: {
-      response: {
-        200: MessageResponseSchema,
-        404: ErrorResponseSchema,
-      },
-    },
-    handler: async (request) => {
-      const clients = request.server.clientCache.getClients(
-        request.localstackConfig.endpoint,
-        request.localstackConfig.region
-      );
-      const service = new IAMService(clients.iam);
-      const { policyArn, versionId } = request.params as { policyArn: string; versionId: string };
-      return service.setDefaultPolicyVersion(decodeURIComponent(policyArn), versionId);
-    },
-  });
+	// Set default policy version
+	app.put("/policies/:policyArn/versions/:versionId/default", {
+		schema: {
+			response: {
+				200: MessageResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new IAMService(clients.iam);
+			const { policyArn, versionId } = request.params as {
+				policyArn: string;
+				versionId: string;
+			};
+			return service.setDefaultPolicyVersion(
+				decodeURIComponent(policyArn),
+				versionId,
+			);
+		},
+	});
 }

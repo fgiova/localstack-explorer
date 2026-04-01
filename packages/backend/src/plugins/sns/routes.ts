@@ -44,7 +44,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			return service.listTopics();
@@ -63,7 +63,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request, reply) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { name } = request.body as { name: string };
@@ -84,11 +84,14 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.deleteTopic(topicArn);
 		},
 	});
@@ -105,11 +108,14 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			const topic = await service.getTopicAttributes(topicArn);
 			return { topic };
 		},
@@ -129,7 +135,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
@@ -137,7 +143,10 @@ export async function snsRoutes(app: FastifyInstance) {
 				attributeName: string;
 				attributeValue: string;
 			};
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.setTopicAttributes(
 				topicArn,
 				attributeName,
@@ -160,7 +169,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { endpoint } = request.query as { endpoint: string };
@@ -184,11 +193,14 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.listSubscriptionsByTopic(topicArn);
 		},
 	});
@@ -207,7 +219,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request, reply) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
@@ -218,7 +230,10 @@ export async function snsRoutes(app: FastifyInstance) {
 					rawMessageDelivery?: boolean;
 					filterPolicy?: string | Record<string, unknown>;
 				};
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			const filterPolicyString = filterPolicy
 				? typeof filterPolicy === "string"
 					? filterPolicy
@@ -249,7 +264,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { subscriptionArn } = request.params as { subscriptionArn: string };
@@ -270,7 +285,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { subscriptionArn } = request.params as { subscriptionArn: string };
@@ -294,7 +309,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { subscriptionArn } = request.params as { subscriptionArn: string };
@@ -326,7 +341,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request, reply) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
@@ -340,7 +355,10 @@ export async function snsRoutes(app: FastifyInstance) {
 					>;
 					targetArn?: string;
 				};
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 
 			// Map camelCase schema attributes to PascalCase expected by service
 			const mappedAttributes = messageAttributes
@@ -375,7 +393,7 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request, reply) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
@@ -390,7 +408,10 @@ export async function snsRoutes(app: FastifyInstance) {
 					>;
 				}>;
 			};
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 
 			// Map camelCase schema attributes to PascalCase expected by service
 			const mappedEntries = entries.map((entry) => ({
@@ -426,11 +447,14 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.listTagsForResource(topicArn);
 		},
 	});
@@ -448,14 +472,17 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
 			const { tags } = request.body as {
 				tags: Array<{ key: string; value: string }>;
 			};
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.tagResource(topicArn, tags);
 		},
 	});
@@ -473,12 +500,15 @@ export async function snsRoutes(app: FastifyInstance) {
 		handler: async (request) => {
 			const clients = request.server.clientCache.getClients(
 				request.localstackConfig.endpoint,
-				request.localstackConfig.region
+				request.localstackConfig.region,
 			);
 			const service = new SNSService(clients.sns);
 			const { topicName } = request.params as { topicName: string };
 			const { tagKeys } = request.body as { tagKeys: string[] };
-			const topicArn = buildTopicArn(topicName, request.localstackConfig.region);
+			const topicArn = buildTopicArn(
+				topicName,
+				request.localstackConfig.region,
+			);
 			return service.untagResource(topicArn, tagKeys);
 		},
 	});

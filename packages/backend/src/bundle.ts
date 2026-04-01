@@ -5,11 +5,11 @@ import Fastify from "fastify";
 import type { ServiceName } from "./config.js";
 import { config } from "./config.js";
 import { checkLocalstackHealth } from "./health.js";
+import clientCachePlugin from "./plugins/client-cache.js";
 import cloudformationPlugin from "./plugins/cloudformation/index.js";
 import dynamodbPlugin from "./plugins/dynamodb/index.js";
 import iamPlugin from "./plugins/iam/index.js";
 import localstackConfigPlugin from "./plugins/localstack-config.js";
-import clientCachePlugin from "./plugins/client-cache.js";
 // Explicit plugin imports (replaces autoload for bundled builds)
 import s3Plugin from "./plugins/s3/index.js";
 import snsPlugin from "./plugins/sns/index.js";
