@@ -344,8 +344,8 @@ describe("SQSService", () => {
 
       const receiveCall = (client.send as ReturnType<typeof vi.fn>).mock.calls[1][0];
       expect(receiveCall.input).toMatchObject({
-        MaxNumberOfMessages: 10,
-        WaitTimeSeconds: 0,
+        MaxNumberOfMessages: 1,
+        WaitTimeSeconds: 20,
         MessageAttributeNames: ["All"],
       });
     });

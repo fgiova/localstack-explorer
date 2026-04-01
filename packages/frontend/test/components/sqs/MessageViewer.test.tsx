@@ -3,12 +3,12 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MessageViewer } from "../../../src/components/sqs/MessageViewer";
 
-// Mock the SQS API hooks
-const mockUseReceiveMessages = vi.fn();
+// Mock the SQS API
+const mockReceiveMessagesPoll = vi.fn();
 const mockUseDeleteMessage = vi.fn();
 
 vi.mock("../../../src/api/sqs", () => ({
-  useReceiveMessages: () => mockUseReceiveMessages(),
+  receiveMessagesPoll: (...args: unknown[]) => mockReceiveMessagesPoll(...args),
   useDeleteMessage: () => mockUseDeleteMessage(),
 }));
 
@@ -28,7 +28,6 @@ function renderWithProviders() {
 
 describe("MessageViewer", () => {
   const mockDeleteMutate = vi.fn();
-  const mockRefetch = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,42 +37,33 @@ describe("MessageViewer", () => {
     });
   });
 
-  it("should render receive messages button", () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: undefined,
-      isFetching: false,
-      refetch: mockRefetch,
-    });
+  it("should render poll button", () => {
+    mockReceiveMessagesPoll.mockResolvedValue({ messages: [] });
 
     renderWithProviders();
 
-    expect(screen.getByRole("button", { name: /receive messages/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /poll/i })).toBeInTheDocument();
   });
 
   it("should render received messages", async () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: {
-        messages: [
-          {
-            messageId: "msg-001",
-            receiptHandle: "handle-001",
-            body: "Hello, World!",
-          },
-          {
-            messageId: "msg-002",
-            receiptHandle: "handle-002",
-            body: "Another message",
-          },
-        ],
-      },
-      isFetching: false,
-      refetch: mockRefetch,
+    mockReceiveMessagesPoll.mockResolvedValue({
+      messages: [
+        {
+          messageId: "msg-001",
+          receiptHandle: "handle-001",
+          body: "Hello, World!",
+        },
+        {
+          messageId: "msg-002",
+          receiptHandle: "handle-002",
+          body: "Another message",
+        },
+      ],
     });
 
     renderWithProviders();
 
-    // Click receive to set enabled state
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/ID: msg-001/)).toBeInTheDocument();
@@ -85,29 +75,24 @@ describe("MessageViewer", () => {
 
   it("should pretty-print JSON body", async () => {
     const jsonBody = '{"key":"value","count":42}';
-    mockUseReceiveMessages.mockReturnValue({
-      data: {
-        messages: [
-          {
-            messageId: "msg-json-001",
-            receiptHandle: "handle-json-001",
-            body: jsonBody,
-          },
-        ],
-      },
-      isFetching: false,
-      refetch: mockRefetch,
+    mockReceiveMessagesPoll.mockResolvedValue({
+      messages: [
+        {
+          messageId: "msg-json-001",
+          receiptHandle: "handle-json-001",
+          body: jsonBody,
+        },
+      ],
     });
 
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/ID: msg-json-001/)).toBeInTheDocument();
     });
 
-    // The JSON should be pretty-printed and rendered inside a <pre> element
     const preElement = document.querySelector("pre");
     expect(preElement).toBeInTheDocument();
     const prettyJson = JSON.stringify({ key: "value", count: 42 }, null, 2);
@@ -116,51 +101,42 @@ describe("MessageViewer", () => {
 
   it("should render non-JSON body as plain text", async () => {
     const plainBody = "This is a plain text message, not JSON.";
-    mockUseReceiveMessages.mockReturnValue({
-      data: {
-        messages: [
-          {
-            messageId: "msg-plain-001",
-            receiptHandle: "handle-plain-001",
-            body: plainBody,
-          },
-        ],
-      },
-      isFetching: false,
-      refetch: mockRefetch,
+    mockReceiveMessagesPoll.mockResolvedValue({
+      messages: [
+        {
+          messageId: "msg-plain-001",
+          receiptHandle: "handle-plain-001",
+          body: plainBody,
+        },
+      ],
     });
 
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
       expect(screen.getByText(plainBody)).toBeInTheDocument();
     });
 
-    // Plain text should NOT be inside a <pre> element
     const preElement = document.querySelector("pre");
     expect(preElement).not.toBeInTheDocument();
   });
 
   it("should call delete mutation when Delete button is clicked", async () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: {
-        messages: [
-          {
-            messageId: "msg-del-001",
-            receiptHandle: "receipt-handle-to-delete",
-            body: "Message to delete",
-          },
-        ],
-      },
-      isFetching: false,
-      refetch: mockRefetch,
+    mockReceiveMessagesPoll.mockResolvedValue({
+      messages: [
+        {
+          messageId: "msg-del-001",
+          receiptHandle: "receipt-handle-to-delete",
+          body: "Message to delete",
+        },
+      ],
     });
 
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Message to delete")).toBeInTheDocument();
@@ -169,50 +145,43 @@ describe("MessageViewer", () => {
     const deleteButton = screen.getByRole("button", { name: /^delete$/i });
     fireEvent.click(deleteButton);
 
-    expect(mockDeleteMutate).toHaveBeenCalledWith({
-      receiptHandle: "receipt-handle-to-delete",
-    });
+    expect(mockDeleteMutate).toHaveBeenCalledWith(
+      { receiptHandle: "receipt-handle-to-delete" },
+      expect.any(Object),
+    );
   });
 
   it("should show message count after receiving", async () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: {
-        messages: [
-          {
-            messageId: "msg-count-001",
-            receiptHandle: "handle-count-001",
-            body: "Message 1",
-          },
-          {
-            messageId: "msg-count-002",
-            receiptHandle: "handle-count-002",
-            body: "Message 2",
-          },
-        ],
-      },
-      isFetching: false,
-      refetch: mockRefetch,
+    mockReceiveMessagesPoll.mockResolvedValue({
+      messages: [
+        {
+          messageId: "msg-count-001",
+          receiptHandle: "handle-count-001",
+          body: "Message 1",
+        },
+        {
+          messageId: "msg-count-002",
+          receiptHandle: "handle-count-002",
+          body: "Message 2",
+        },
+      ],
     });
 
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/2 messages received/i)).toBeInTheDocument();
+      expect(screen.getByText(/2 messages/)).toBeInTheDocument();
     });
   });
 
   it("should show empty state when no messages are available", async () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: { messages: [] },
-      isFetching: false,
-      refetch: mockRefetch,
-    });
+    mockReceiveMessagesPoll.mockResolvedValue({ messages: [] });
 
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole("button", { name: /receive messages/i }));
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
 
     await waitFor(() => {
       expect(
@@ -221,16 +190,20 @@ describe("MessageViewer", () => {
     });
   });
 
-  it("should show receiving state while fetching", () => {
-    mockUseReceiveMessages.mockReturnValue({
-      data: undefined,
-      isFetching: true,
-      refetch: mockRefetch,
-    });
+  it("should call receiveMessagesPoll with correct parameters", async () => {
+    mockReceiveMessagesPoll.mockResolvedValue({ messages: [] });
 
     renderWithProviders();
 
-    expect(screen.getByRole("button", { name: /receiving\.\.\./i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /receiving\.\.\./i })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /poll/i }));
+
+    await waitFor(() => {
+      expect(mockReceiveMessagesPoll).toHaveBeenCalledWith(
+        TEST_QUEUE_NAME,
+        1,
+        20,
+        expect.any(AbortSignal),
+      );
+    });
   });
 });

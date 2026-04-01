@@ -72,7 +72,7 @@ describe("ClientCache", () => {
       }
 
       // Get a reference to the first (oldest) entry
-      const firstClients = cache.getClients("http://localhost:4566", "us-east-1");
+      const _firstClients = cache.getClients("http://localhost:4566", "us-east-1");
 
       // Add one more entry to trigger eviction of the oldest
       // The oldest is now http://localhost:4566 (re-inserted by the above getClients call),
@@ -85,7 +85,7 @@ describe("ClientCache", () => {
       }
 
       // Capture the first entry before eviction
-      const oldestClients = cache.getClients("http://localhost:4566", "us-east-1");
+      const _oldestClients = cache.getClients("http://localhost:4566", "us-east-1");
 
       // Reset and fill again without accessing the first entry, then trigger eviction
       cache = new ClientCache();
@@ -117,7 +117,7 @@ describe("ClientCache", () => {
       }
 
       // Capture clients for first (oldest) entry before eviction
-      const clientsForFirst = cache.getClients(endpoints[0], "us-east-1");
+      const _clientsForFirst = cache.getClients(endpoints[0], "us-east-1");
       // Re-accessing shifts it to most-recently-used, so reset
       cache = new ClientCache();
       for (const ep of endpoints) {

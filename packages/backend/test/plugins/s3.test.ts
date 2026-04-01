@@ -3,6 +3,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { registerErrorHandler } from "../../src/shared/errors.js";
 import { s3Routes } from "../../src/plugins/s3/routes.js";
 import type { S3Service } from "../../src/plugins/s3/service.js";
+import type { ClientCache } from "../../src/aws/client-cache.js";
 
 interface MockS3Service {
   listBuckets: Mock;
@@ -52,6 +53,17 @@ function createMockS3Service(): MockS3Service {
   };
 }
 
+// Mock S3Service constructor to return our mock
+vi.mock("../../src/plugins/s3/service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/plugins/s3/service.js")>();
+  return {
+    ...actual,
+    S3Service: vi.fn(),
+  };
+});
+
+import { S3Service as S3ServiceClass } from "../../src/plugins/s3/service.js";
+
 describe("S3 Routes", () => {
   let app: FastifyInstance;
   let mockService: MockS3Service;
@@ -59,8 +71,30 @@ describe("S3 Routes", () => {
   beforeAll(async () => {
     app = Fastify();
     registerErrorHandler(app);
+
     mockService = createMockS3Service();
-    await app.register(s3Routes, { s3Service: mockService as unknown as S3Service });
+
+    // Mock the S3Service constructor to return our mock service
+    (S3ServiceClass as unknown as Mock).mockImplementation(() => mockService);
+
+    // Decorate with clientCache mock
+    const mockClientCache = {
+      getClients: vi.fn().mockReturnValue({
+        s3: {},  // The actual S3Client is not used since S3Service is mocked
+      }),
+    };
+    app.decorate("clientCache", mockClientCache as unknown as ClientCache);
+
+    // Decorate request with localstackConfig
+    app.decorateRequest("localstackConfig", null);
+    app.addHook("onRequest", async (request) => {
+      request.localstackConfig = {
+        endpoint: "http://localhost:4566",
+        region: "us-east-1",
+      };
+    });
+
+    await app.register(s3Routes);
     await app.ready();
   });
 

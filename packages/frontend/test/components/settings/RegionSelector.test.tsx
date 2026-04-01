@@ -31,7 +31,7 @@ describe("RegionSelector", () => {
     useConfigStore.setState({ region: "eu-west-1" });
     renderWithProviders();
 
-    const select = screen.getByRole("combobox", { hidden: true });
+    const _select = screen.getByRole("combobox", { hidden: true });
     // The select element is a native <select>, check via aria-label
     const selectEl = screen.getByLabelText("AWS Region") as HTMLSelectElement;
     expect(selectEl.value).toBe("eu-west-1");
