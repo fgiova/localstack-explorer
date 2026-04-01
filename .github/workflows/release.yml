@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      new-release-published: ${{ steps.semantic.outputs.new_release_published }}
+      new-release-version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  desktop:
+    needs: release
+    if: needs.release.outputs.new-release-published == 'true'
+    uses: ./.github/workflows/desktop.yml
+    with:
+      tag: v${{ needs.release.outputs.new-release-version }}
+    permissions:
+      contents: write
+
+  docker:
+    needs: release
+    if: needs.release.outputs.new-release-published == 'true'
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag: v${{ needs.release.outputs.new-release-version }}
+    permissions:
+      contents: read
+      packages: write
