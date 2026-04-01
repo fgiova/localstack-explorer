@@ -2,7 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, vi, type Mock } from "vitest
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerErrorHandler } from "../../src/shared/errors.js";
 import { s3Routes } from "../../src/plugins/s3/routes.js";
-import type { S3Service } from "../../src/plugins/s3/service.js";
 import type { ClientCache } from "../../src/aws/client-cache.js";
 
 interface MockS3Service {
