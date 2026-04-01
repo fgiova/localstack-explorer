@@ -54,6 +54,7 @@ jobs:
     uses: ./.github/workflows/docker.yml
     with:
       tag: v${{ needs.release.outputs.new-release-version }}
+    secrets: inherit
     permissions:
       contents: read
       packages: write
