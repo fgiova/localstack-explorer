@@ -38,6 +38,7 @@ function mapLambdaError(err: unknown, functionName: string): never {
 		case "InvalidParameterValueException":
 			throw new AppError(error.message, 400, "INVALID_PARAMETER");
 		case "ServiceException":
+		case "InternalError":
 			throw new AppError(error.message, 502, "SERVICE_ERROR");
 		case "TooManyRequestsException":
 			throw new AppError(error.message, 429, "TOO_MANY_REQUESTS");

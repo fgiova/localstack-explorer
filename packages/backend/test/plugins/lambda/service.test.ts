@@ -630,6 +630,18 @@ describe("LambdaService", () => {
 			});
 		});
 
+		it("throws AppError with 502 on InternalError", async () => {
+			const error = Object.assign(new Error("Internal failure"), {
+				name: "InternalError",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(service.invokeFunction("my-fn")).rejects.toMatchObject({
+				statusCode: 502,
+				code: "SERVICE_ERROR",
+			});
+		});
+
 		it("re-throws unknown errors from invokeFunction", async () => {
 			const error = new Error("Network timeout");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
@@ -896,6 +908,32 @@ describe("LambdaService", () => {
 			});
 		});
 
+		it("handles mappings with missing optional fields", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				EventSourceMappings: [
+					{
+						State: "Creating",
+					},
+				],
+			});
+
+			const result = await service.listEventSourceMappings("my-fn");
+
+			expect(result.eventSourceMappings).toEqual([
+				{
+					uuid: "",
+					eventSourceArn: undefined,
+					functionArn: undefined,
+					state: "Creating",
+					batchSize: undefined,
+					lastModified: undefined,
+					maximumBatchingWindowInSeconds: undefined,
+					startingPosition: undefined,
+					enabled: true,
+				},
+			]);
+		});
+
 		it("returns empty list when EventSourceMappings is undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -958,6 +996,16 @@ describe("LambdaService", () => {
 			expect(client.send).toHaveBeenCalledOnce();
 		});
 
+		it("returns empty uuid when response UUID is undefined", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.createEventSourceMapping("my-fn", {
+				eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+			});
+
+			expect(result.uuid).toBe("");
+		});
+
 		it("passes optional params (batchSize, startingPosition, enabled)", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				UUID: "new-uuid-456",
@@ -1010,6 +1058,24 @@ describe("LambdaService", () => {
 			).rejects.toMatchObject({
 				statusCode: 400,
 				code: "INVALID_PARAMETER",
+			});
+		});
+
+		it("passes maximumBatchingWindowInSeconds when provided", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				UUID: "new-uuid-789",
+			});
+
+			await service.createEventSourceMapping("my-fn", {
+				eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				maximumBatchingWindowInSeconds: 30,
+			});
+
+			const call = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(call.input).toMatchObject({
+				FunctionName: "my-fn",
+				EventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				MaximumBatchingWindowInSeconds: 30,
 			});
 		});
 	});
@@ -1110,6 +1176,23 @@ describe("LambdaService", () => {
 				],
 				nextMarker: undefined,
 			});
+		});
+
+		it("rethrows unexpected errors from GetPolicy", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockRejectedValueOnce(
+					Object.assign(new Error("Access denied"), {
+						name: "AccessDeniedException",
+					}),
+				);
+
+			await expect(service.getFunctionTriggers("my-fn")).rejects.toThrow(
+				"Access denied",
+			);
 		});
 
 		it("returns empty policyTriggers when no policy exists (ResourceNotFoundException)", async () => {
@@ -1259,6 +1342,30 @@ describe("LambdaService", () => {
 				service: "events.amazonaws.com",
 				sourceArn: undefined,
 			});
+		});
+
+		it("defaults sid to empty string when Sid is missing", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockResolvedValueOnce({
+					Policy: JSON.stringify({
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "events.amazonaws.com" },
+							},
+						],
+					}),
+				});
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result.policyTriggers[0].sid).toBe("");
 		});
 	});
 });
