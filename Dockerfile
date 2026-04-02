@@ -10,6 +10,7 @@ COPY pnpm-workspace.yaml /app/localstack-explorer-builder/.
 COPY package.json /app/localstack-explorer-builder/.
 COPY tsconfig.base.json /app/localstack-explorer-builder/.
 COPY packages /app/localstack-explorer-builder/packages
+COPY icons /app/localstack-explorer-builder/icons
 
 FROM base AS build
 WORKDIR /app/localstack-explorer-builder
