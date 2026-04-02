@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/fgiova/localstack-explorer/compare/v1.0.0...v1.1.0) (2026-04-02)
+
+
+### Bug Fixes
+
+* add icons directory to Dockerfile for localstack-explorer-builder ([5d299c8](https://github.com/fgiova/localstack-explorer/commit/5d299c8cfeaa99c9a8dc87181df8a587e90513b1))
+
+
+### Features
+
+* add TypeScript configuration for build and testing, implement global setup and teardown for tests ([d72558f](https://github.com/fgiova/localstack-explorer/commit/d72558f5324c9bbe762c0f1d208f8ad03f4b89a0))
+* detect active LocalStack services at runtime and display their status in the UI ([3e9368c](https://github.com/fgiova/localstack-explorer/commit/3e9368ca386a41dd3ed052bcb8ace9ddd0108422))
+
 # 1.0.0 (2026-04-01)
 
 
