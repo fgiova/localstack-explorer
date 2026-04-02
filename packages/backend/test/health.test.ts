@@ -23,7 +23,7 @@ describe("checkLocalstackHealth", () => {
 
 	it("returns connected: true with active services when fetch resolves with an ok response", async () => {
 		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-			mockFetchOk({ s3: "running", sqs: "running", lambda: "running" }),
+			mockFetchOk({ s3: "running", sqs: "running", kinesis: "running" }),
 		);
 
 		const result = await checkLocalstackHealth(ENDPOINT, REGION);
@@ -34,8 +34,8 @@ describe("checkLocalstackHealth", () => {
 			region: REGION,
 			services: expect.arrayContaining(["s3", "sqs"]),
 		});
-		// lambda is not in enabled services, so it should be excluded
-		expect(result.services).not.toContain("lambda");
+		// kinesis is not in enabled services, so it should be excluded
+		expect(result.services).not.toContain("kinesis");
 		expect(fetch).toHaveBeenCalledWith(
 			`${ENDPOINT}/_localstack/health`,
 			expect.objectContaining({ signal: expect.any(AbortSignal) }),

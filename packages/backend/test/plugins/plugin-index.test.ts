@@ -6,6 +6,7 @@ import clientCachePlugin from "../../src/plugins/client-cache.js";
 import cloudformationPlugin from "../../src/plugins/cloudformation/index.js";
 import dynamodbPlugin from "../../src/plugins/dynamodb/index.js";
 import iamPlugin from "../../src/plugins/iam/index.js";
+import lambdaPlugin from "../../src/plugins/lambda/index.js";
 import localstackConfigPlugin from "../../src/plugins/localstack-config.js";
 import snsPlugin from "../../src/plugins/sns/index.js";
 import sqsPlugin from "../../src/plugins/sqs/index.js";
@@ -52,6 +53,15 @@ describe("plugin index files", () => {
 		await app.register(localstackConfigPlugin);
 		await app.register(clientCachePlugin);
 		await app.register(cloudformationPlugin);
+		await expect(app.ready()).resolves.not.toThrow();
+		await app.close();
+	});
+
+	it("should register lambdaPlugin without error", async () => {
+		const app = Fastify();
+		await app.register(localstackConfigPlugin);
+		await app.register(clientCachePlugin);
+		await app.register(lambdaPlugin, { prefix: "/api/lambda" });
 		await expect(app.ready()).resolves.not.toThrow();
 		await app.close();
 	});

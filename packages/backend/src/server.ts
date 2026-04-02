@@ -1,6 +1,6 @@
 /* v8 ignore start */
-import { config } from "./config";
-import { buildApp } from "./index";
+import { config } from "./config.js";
+import { buildApp } from "./index.js";
 
 async function main() {
 	const app = await buildApp({ logger: true });

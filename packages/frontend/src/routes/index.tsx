@@ -6,6 +6,7 @@ import {
 	Layers,
 	MessageSquare,
 	Shield,
+	Zap,
 } from "lucide-react";
 import { useHealthCheck } from "@/api/config";
 import { useEnabledServices } from "@/api/services";
@@ -60,6 +61,14 @@ export const services = [
 		icon: Database,
 		description: "NoSQL Database — Manage tables, items, and queries",
 		color: "text-purple-600",
+	},
+	{
+		name: "Lambda",
+		key: "lambda",
+		path: "/lambda",
+		icon: Zap,
+		description: "Serverless Functions — Manage and invoke Lambda functions",
+		color: "text-yellow-600",
 	},
 	{
 		name: "CloudFormation",

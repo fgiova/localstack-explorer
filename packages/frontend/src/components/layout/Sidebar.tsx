@@ -8,6 +8,7 @@ import {
 	Layers,
 	MessageSquare,
 	Shield,
+	Zap,
 } from "lucide-react";
 import { useHealthCheck } from "@/api/config";
 import { useEnabledServices } from "@/api/services";
@@ -49,6 +50,13 @@ const services = [
 		path: "/iam",
 		icon: Shield,
 		description: "Identity & Access",
+	},
+	{
+		name: "Lambda",
+		key: "lambda",
+		path: "/lambda",
+		icon: Zap,
+		description: "Serverless Functions",
 	},
 	{
 		name: "CloudFormation",

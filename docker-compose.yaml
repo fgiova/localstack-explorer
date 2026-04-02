@@ -4,7 +4,7 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=${ENABLED_SERVICES:-s3,sqs,sns,iam,cloudformation,dynamodb}
+      - SERVICES=${ENABLED_SERVICES:-s3,sqs,sns,iam,lambda,cloudformation,dynamodb}
       - DEBUG=0
       - EAGER_SERVICE_LOADING=1
     volumes:

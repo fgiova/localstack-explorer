@@ -2,6 +2,7 @@ import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBStreamsClient } from "@aws-sdk/client-dynamodb-streams";
 import { IAMClient } from "@aws-sdk/client-iam";
+import { LambdaClient } from "@aws-sdk/client-lambda";
 import { S3Client } from "@aws-sdk/client-s3";
 import { SNSClient } from "@aws-sdk/client-sns";
 import { SQSClient } from "@aws-sdk/client-sqs";
@@ -14,6 +15,7 @@ export interface AwsClients {
 	iam: IAMClient;
 	cloudformation: CloudFormationClient;
 	dynamodb: DynamoDBClient;
+	lambda: LambdaClient;
 	dynamodbDocument: DynamoDBDocumentClient;
 	dynamodbStreams: DynamoDBStreamsClient;
 }
@@ -46,6 +48,7 @@ export class ClientCache {
 			iam: new IAMClient(commonConfig),
 			cloudformation: new CloudFormationClient(commonConfig),
 			dynamodb,
+			lambda: new LambdaClient(commonConfig),
 			dynamodbDocument: DynamoDBDocumentClient.from(dynamodb, {
 				marshallOptions: { removeUndefinedValues: true },
 			}),

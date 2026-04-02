@@ -6,7 +6,7 @@ const startContainer = async () => {
 	const localStack = await new GenericContainer("localstack/localstack:4")
 		.withExposedPorts(4566)
 		.withEnvironment({
-			SERVICES: "s3,sqs,sns,iam,cloudformation,dynamodb",
+			SERVICES: "s3,sqs,sns,iam,lambda,cloudformation,dynamodb",
 			DEBUG: "0",
 			NODE_TLS_REJECT_UNAUTHORIZED: "0",
 			HOSTNAME: "localhost",
