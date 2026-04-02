@@ -246,7 +246,7 @@ describe("SQSService", () => {
 			expect(result.createdTimestamp).toBeUndefined();
 		});
 
-		it("throws AppError with 404 when queue does not exist", async () => {
+		it("throws AppError with 404 when queue does not exist (QueueDoesNotExist via getQueueUrl)", async () => {
 			const error = new Error("Queue does not exist") as Error & {
 				name: string;
 			};
@@ -259,6 +259,88 @@ describe("SQSService", () => {
 				statusCode: 404,
 				code: "QUEUE_NOT_FOUND",
 			});
+		});
+
+		it("throws AppError with 404 when GetQueueAttributes returns NonExistentQueue", async () => {
+			// First call: getQueueUrl succeeds
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				// Second call: GetQueueAttributes throws NonExistentQueue
+				.mockRejectedValueOnce(
+					Object.assign(new Error("Queue does not exist"), {
+						name: "NonExistentQueue",
+					}),
+				);
+
+			await expect(service.getQueueDetail("my-queue")).rejects.toMatchObject({
+				statusCode: 404,
+				code: "QUEUE_NOT_FOUND",
+			});
+		});
+
+		it("re-throws unknown errors from getQueueDetail (GetQueueAttributes)", async () => {
+			const unknownError = new Error("Unexpected AWS error");
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				.mockRejectedValueOnce(unknownError);
+
+			await expect(service.getQueueDetail("my-queue")).rejects.toThrow(
+				"Unexpected AWS error",
+			);
+		});
+	});
+
+	describe("getQueueUrl", () => {
+		it("re-throws unknown errors that are not QueueDoesNotExist or NonExistentQueue", async () => {
+			const unknownError = Object.assign(new Error("Throttled"), {
+				name: "ThrottlingException",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				unknownError,
+			);
+
+			await expect(service.getQueueUrl("my-queue")).rejects.toThrow("Throttled");
+		});
+
+		it("returns empty string when QueueUrl is undefined in response", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				// QueueUrl intentionally absent
+			});
+
+			const result = await service.getQueueUrl("my-queue");
+			expect(result).toBe("");
+		});
+	});
+
+	describe("listQueues (additional branch coverage)", () => {
+		it("returns queueName as empty string when URL has no segments", async () => {
+			// Manufacture a URL where split("/") last element is empty string
+			// so the ?? "" fallback fires. An empty string URL splits to [""].
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				QueueUrls: [""],
+			});
+
+			const result = await service.listQueues();
+			expect(result.queues[0].queueName).toBe("");
+		});
+	});
+
+	describe("getQueueDetail (additional branch coverage)", () => {
+		it("uses empty object when Attributes is undefined in GetQueueAttributes response", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				.mockResolvedValueOnce({
+					// Attributes intentionally absent (undefined)
+				});
+
+			const result = await service.getQueueDetail("my-queue");
+			expect(result.approximateNumberOfMessages).toBe(0);
 		});
 	});
 

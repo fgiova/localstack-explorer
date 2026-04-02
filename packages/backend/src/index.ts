@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import autoload from "@fastify/autoload";
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import { config } from "./config.js";
 import { checkLocalstackHealth } from "./health.js";
 import clientCachePlugin from "./plugins/client-cache.js";
@@ -14,9 +14,11 @@ import { registerErrorHandler } from "./shared/errors.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function main() {
+export async function buildApp(
+	options: { logger?: boolean } = {},
+): Promise<FastifyInstance> {
 	const app = Fastify({
-		logger: true,
+		logger: options.logger ?? false,
 	});
 
 	// Register CORS
@@ -73,6 +75,13 @@ async function main() {
 		});
 	}
 
+	return app;
+}
+
+/* v8 ignore start */
+async function main() {
+	const app = await buildApp({ logger: true });
+
 	try {
 		await app.listen({ port: config.port, host: "0.0.0.0" });
 		app.log.info(`Server running on http://localhost:${config.port}`);
@@ -84,3 +93,4 @@ async function main() {
 }
 
 main();
+/* v8 ignore stop */

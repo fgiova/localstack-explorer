@@ -1,3 +1,4 @@
+import multipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance } from "fastify";
 import {
 	afterAll,
@@ -316,6 +317,155 @@ describe("S3 Routes", () => {
 				method: "GET",
 				url: "/test-bucket/objects/download",
 			});
+			expect(response.statusCode).toBe(400);
+		});
+	});
+});
+
+describe("S3 Routes - Upload (multipart)", () => {
+	let uploadApp: FastifyInstance;
+	let mockService: MockS3Service;
+
+	beforeAll(async () => {
+		uploadApp = Fastify();
+		registerErrorHandler(uploadApp);
+
+		mockService = createMockS3Service();
+
+		(S3ServiceClass as unknown as Mock).mockImplementation(() => mockService);
+
+		const mockClientCache = {
+			getClients: vi.fn().mockReturnValue({ s3: {} }),
+		};
+		uploadApp.decorate(
+			"clientCache",
+			mockClientCache as unknown as ClientCache,
+		);
+
+		uploadApp.decorateRequest("localstackConfig", null);
+		uploadApp.addHook("onRequest", async (request) => {
+			request.localstackConfig = {
+				endpoint: "http://localhost:4566",
+				region: "us-east-1",
+			};
+		});
+
+		// Register multipart support so request.file() is available
+		await uploadApp.register(multipart);
+		await uploadApp.register(s3Routes);
+		await uploadApp.ready();
+	});
+
+	afterAll(async () => {
+		await uploadApp.close();
+	});
+
+	describe("POST /:bucketName/objects/upload (uploadObject)", () => {
+		it("should upload a file and return key and bucket (key from field)", async () => {
+			mockService.uploadObject.mockClear();
+			mockService.uploadObject.mockResolvedValueOnce({
+				key: "my-key.txt",
+				bucket: "test-bucket",
+			});
+
+			// Build a multipart body with a key field and a file part
+			const boundary = "----TestBoundary123";
+			const fileContent = "hello world";
+			const body = [
+				`--${boundary}`,
+				'Content-Disposition: form-data; name="key"',
+				"",
+				"my-key.txt",
+				`--${boundary}`,
+				'Content-Disposition: form-data; name="file"; filename="upload.txt"',
+				"Content-Type: text/plain",
+				"",
+				fileContent,
+				`--${boundary}--`,
+				"",
+			].join("\r\n");
+
+			const response = await uploadApp.inject({
+				method: "POST",
+				url: "/test-bucket/objects/upload",
+				payload: body,
+				headers: {
+					"content-type": `multipart/form-data; boundary=${boundary}`,
+				},
+			});
+
+			expect(response.statusCode).toBe(200);
+			const respBody = response.json<{ key: string; bucket: string }>();
+			expect(respBody.key).toBe("my-key.txt");
+			expect(respBody.bucket).toBe("test-bucket");
+			expect(mockService.uploadObject).toHaveBeenCalledWith(
+				"test-bucket",
+				"my-key.txt",
+				expect.any(Buffer),
+				"text/plain",
+			);
+		});
+
+		it("should use filename when no key field is provided", async () => {
+			mockService.uploadObject.mockClear();
+			mockService.uploadObject.mockResolvedValueOnce({
+				key: "upload.txt",
+				bucket: "test-bucket",
+			});
+
+			const boundary = "----TestBoundary456";
+			const fileContent = "file without key field";
+			const body = [
+				`--${boundary}`,
+				'Content-Disposition: form-data; name="file"; filename="upload.txt"',
+				"Content-Type: text/plain",
+				"",
+				fileContent,
+				`--${boundary}--`,
+				"",
+			].join("\r\n");
+
+			const response = await uploadApp.inject({
+				method: "POST",
+				url: "/test-bucket/objects/upload",
+				payload: body,
+				headers: {
+					"content-type": `multipart/form-data; boundary=${boundary}`,
+				},
+			});
+
+			expect(response.statusCode).toBe(200);
+			expect(mockService.uploadObject).toHaveBeenCalledWith(
+				"test-bucket",
+				"upload.txt",
+				expect.any(Buffer),
+				"text/plain",
+			);
+		});
+
+		it("should throw AppError 400 when no file is provided", async () => {
+			// Send a non-multipart request so request.file() returns undefined
+			const boundary = "----TestBoundaryEmpty";
+			const body = [
+				`--${boundary}`,
+				'Content-Disposition: form-data; name="otherField"',
+				"",
+				"some value",
+				`--${boundary}--`,
+				"",
+			].join("\r\n");
+
+			const response = await uploadApp.inject({
+				method: "POST",
+				url: "/test-bucket/objects/upload",
+				payload: body,
+				headers: {
+					"content-type": `multipart/form-data; boundary=${boundary}`,
+				},
+			});
+
+			// When no file part is present, request.file() returns undefined
+			// and the handler should return 400
 			expect(response.statusCode).toBe(400);
 		});
 	});
