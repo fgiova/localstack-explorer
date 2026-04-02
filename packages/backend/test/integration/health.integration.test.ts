@@ -35,7 +35,7 @@ describe("Health & Services Integration", () => {
 		await app.close();
 	});
 
-	it("should return health connected: true", async () => {
+	it("should return health connected: true with active services", async () => {
 		const res = await app.inject({
 			method: "GET",
 			url: "/api/health",
@@ -44,6 +44,9 @@ describe("Health & Services Integration", () => {
 		expect(res.statusCode).toBe(200);
 		const body = res.json();
 		expect(body.connected).toBe(true);
+		expect(body.services).toBeDefined();
+		expect(Array.isArray(body.services)).toBe(true);
+		expect(body.services.length).toBeGreaterThan(0);
 	});
 
 	it("should return services list", async () => {

@@ -334,7 +334,7 @@ export async function iamRoutes(app: FastifyInstance) {
 	app.delete("/users/:userName/attached-policies/:policyArn", {
 		schema: {
 			response: {
-				200: DeleteResponseSchema,
+				200: MessageResponseSchema,
 				404: ErrorResponseSchema,
 			},
 		},
@@ -482,7 +482,7 @@ export async function iamRoutes(app: FastifyInstance) {
 	app.delete("/groups/:groupName/members/:userName", {
 		schema: {
 			response: {
-				200: DeleteResponseSchema,
+				200: MessageResponseSchema,
 				404: ErrorResponseSchema,
 			},
 		},

@@ -176,6 +176,7 @@ export async function s3Routes(app: FastifyInstance) {
 			const { bucketName } = request.params as { bucketName: string };
 			const { key } = request.query as { key: string };
 			const result = await service.downloadObject(bucketName, key);
+			/* v8 ignore next */
 			const filename = key.split("/").pop() ?? key;
 			return reply
 				.header("Content-Type", result.contentType)

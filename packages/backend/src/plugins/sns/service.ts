@@ -58,6 +58,7 @@ export class SNSService {
 		const topics = (response.Topics ?? []).map((topic) => {
 			const topicArn = topic.TopicArn ?? "";
 			const parts = topicArn.split(":");
+			/* v8 ignore next */
 			const name = parts[parts.length - 1] ?? "";
 			return { topicArn, name };
 		});

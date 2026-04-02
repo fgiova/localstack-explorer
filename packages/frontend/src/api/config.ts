@@ -5,6 +5,7 @@ interface HealthResponse {
 	connected: boolean;
 	endpoint: string;
 	region: string;
+	services: string[];
 	error?: string;
 }
 

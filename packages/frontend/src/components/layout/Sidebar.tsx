@@ -9,9 +9,15 @@ import {
 	MessageSquare,
 	Shield,
 } from "lucide-react";
+import { useHealthCheck } from "@/api/config";
 import { useEnabledServices } from "@/api/services";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app";
 
@@ -65,7 +71,11 @@ export function Sidebar() {
 	const routerState = useRouterState();
 	const currentPath = routerState.location.pathname;
 	const { data } = useEnabledServices();
+	const { data: healthData } = useHealthCheck();
 	const enabledSet = data ? new Set(data.services) : null;
+	const activeSet = healthData?.services
+		? new Set(healthData.services)
+		: null;
 
 	const visibleServices = enabledSet
 		? services.filter((s) => enabledSet.has(s.key))
@@ -101,14 +111,46 @@ export function Sidebar() {
 			<Separator />
 			<nav className="space-y-1 p-2">
 				{visibleServices.map((service) => {
-					const isActive = currentPath.startsWith(service.path);
+					const isCurrentRoute = currentPath.startsWith(service.path);
+					const isServiceActive = !activeSet || activeSet.has(service.key);
+
+					if (!isServiceActive) {
+						const item = (
+							<div
+								key={service.path}
+								className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium opacity-40 cursor-not-allowed"
+							>
+								<service.icon className="h-5 w-5 shrink-0" />
+								{sidebarOpen && (
+									<div className="flex flex-col">
+										<span>{service.name}</span>
+										<span className="text-xs text-muted-foreground">
+											Service not active
+										</span>
+									</div>
+								)}
+							</div>
+						);
+
+						return sidebarOpen ? (
+							item
+						) : (
+							<Tooltip key={service.path}>
+								<TooltipTrigger asChild>{item}</TooltipTrigger>
+								<TooltipContent side="right">
+									{service.name} — not active
+								</TooltipContent>
+							</Tooltip>
+						);
+					}
+
 					return (
 						<Link
 							key={service.path}
 							to={service.path}
 							className={cn(
 								"flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-								isActive
+								isCurrentRoute
 									? "bg-sidebar-accent text-sidebar-accent-foreground"
 									: "text-sidebar-foreground hover:bg-sidebar-accent/50",
 							)}

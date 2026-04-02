@@ -38,7 +38,7 @@ vi.mock("@fastify/static", () => {
 vi.mock("../src/health.js", () => ({
 	checkLocalstackHealth: vi
 		.fn()
-		.mockResolvedValue({ status: "ok" }),
+		.mockResolvedValue({ connected: true, endpoint: "http://localhost:4566", region: "us-east-1", services: ["s3", "sqs", "sns", "iam", "cloudformation", "dynamodb"] }),
 }));
 
 // Mock fs.existsSync so we can control whether publicDir "exists"
@@ -74,7 +74,8 @@ describe("buildApp", () => {
 		});
 		expect(healthRes.statusCode).toBe(200);
 		const body = healthRes.json();
-		expect(body.status).toBe("ok");
+		expect(body.connected).toBe(true);
+		expect(body.services).toBeDefined();
 
 		await app.close();
 	});
