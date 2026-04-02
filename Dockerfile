@@ -29,4 +29,4 @@ WORKDIR /app/localstack-explorer
 COPY --from=deps /app/localstack-explorer/node_modules ./node_modules
 COPY --from=build /app/localstack-explorer-builder/packages/backend/dist/. .
 
-ENTRYPOINT ["node", "index.js"]
+ENTRYPOINT ["node", "server.js"]
