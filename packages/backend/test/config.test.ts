@@ -1,8 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const ALL_SERVICES = ["s3", "sqs", "sns", "iam", "cloudformation", "dynamodb"];
+const ALL_SERVICES = [
+	"s3",
+	"sqs",
+	"sns",
+	"iam",
+	"cloudformation",
+	"dynamodb",
+	"lambda",
+];
 
-let mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb";
+let mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb,lambda";
 
 vi.mock("env-schema", () => ({
 	envSchema: () => ({
@@ -19,7 +27,7 @@ beforeEach(() => {
 
 describe("config shape", () => {
 	it("exposes port, endpoint, region with correct types", async () => {
-		mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb";
+		mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb,lambda";
 		const { config } = await import("../src/config.js");
 
 		expect(config.port).toBe(3001);
@@ -28,13 +36,20 @@ describe("config shape", () => {
 	});
 
 	it("exposes all enabled services", async () => {
-		mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb";
+		mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb,lambda";
 		const { config } = await import("../src/config.js");
 
-		expect(config.enabledServices).toHaveLength(6);
+		expect(config.enabledServices).toHaveLength(7);
 		for (const svc of config.enabledServices) {
 			expect(ALL_SERVICES).toContain(svc);
 		}
+	});
+
+	it("includes lambda in enabled services", async () => {
+		mockEnabledServices = "s3,sqs,sns,iam,cloudformation,dynamodb,lambda";
+		const { config } = await import("../src/config.js");
+
+		expect(config.enabledServices).toContain("lambda");
 	});
 });
 

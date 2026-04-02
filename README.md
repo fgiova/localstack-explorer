@@ -12,6 +12,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
 | SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
 | IAM            | Fully implemented | Users, groups, managed/inline policies, access keys, versioning   |
+| Lambda         | Fully implemented | Functions CRUD, invoke, code/config update, versions, aliases     |
 | CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
 | DynamoDB       | Fully implemented | Table management, create, list, detail views                      |
 
@@ -19,7 +20,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 
 ### Prerequisites
 
-- **Node.js** >= 20
+- **Node.js** >= 24 (see `.nvmrc`)
 - **pnpm** >= 9
 - **Docker** (for LocalStack)
 
@@ -37,7 +38,7 @@ pnpm install
 docker compose up -d
 ```
 
-This starts LocalStack with all required services (S3, SQS, SNS, IAM, CloudFormation, DynamoDB) on `http://localhost:4566`.
+This starts LocalStack with all required services (S3, SQS, SNS, IAM, Lambda, CloudFormation, DynamoDB) on `http://localhost:4566`.
 
 ### Development
 
@@ -118,7 +119,7 @@ The backend uses [env-schema](https://github.com/fastify/env-schema) for environ
 | `PORT`                | `3001`                                   | Backend server port                       |
 | `LOCALSTACK_ENDPOINT` | `http://localhost:4566`                  | Default LocalStack endpoint URL           |
 | `LOCALSTACK_REGION`   | `us-east-1`                              | Default AWS region for LocalStack clients |
-| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,cloudformation,dynamodb` | Comma-separated list of enabled services  |
+| `ENABLED_SERVICES`    | `s3,sqs,sns,iam,lambda,cloudformation,dynamodb` | Comma-separated list of enabled services  |
 
 Create a `.env` file in `packages/backend/` to override defaults.
 
@@ -142,10 +143,10 @@ By default, only a subset of services is enabled. You can control which services
 ENABLED_SERVICES=s3,sqs
 
 # Enable all available services
-ENABLED_SERVICES=s3,sqs,sns,iam,cloudformation,dynamodb
+ENABLED_SERVICES=s3,sqs,sns,iam,lambda,cloudformation,dynamodb
 ```
 
-Available service names: `s3`, `sqs`, `sns`, `iam`, `cloudformation`, `dynamodb`.
+Available service names: `s3`, `sqs`, `sns`, `iam`, `lambda`, `cloudformation`, `dynamodb`.
 
 When a service is disabled:
 - Its backend API routes are **not registered** (requests return 404)
@@ -153,6 +154,10 @@ When a service is disabled:
 - Its entry is **removed** from the sidebar navigation
 
 The frontend fetches the list of enabled services from the `GET /api/services` endpoint at startup and filters the UI accordingly.
+
+### Active Service Detection
+
+The health endpoint (`GET /api/health`) queries LocalStack's native `/_localstack/health` API and returns the list of services that are actually running. The frontend uses this data (refreshed every 30 seconds) to visually disable services that are configured but not currently active on the LocalStack instance — they appear greyed out and are not clickable.
 
 ## Project Structure
 
@@ -162,7 +167,8 @@ localstack-explorer/
 ├── packages/
 │   ├── backend/            # Fastify API server
 │   │   └── src/
-│   │       ├── index.ts        # Entry point (autoload plugins, serves frontend)
+│   │       ├── index.ts        # App factory (autoload plugins, serves frontend)
+│   │       ├── server.ts       # Server entry point (starts listening)
 │   │       ├── bundle.ts       # Bundle entry point (explicit plugin imports)
 │   │       ├── config.ts       # env-schema configuration
 │   │       ├── health.ts       # LocalStack connectivity check
@@ -172,6 +178,7 @@ localstack-explorer/
 │   │       │   ├── sqs/        # Complete implementation
 │   │       │   ├── sns/        # Complete implementation
 │   │       │   ├── iam/        # Complete implementation
+│   │       │   ├── lambda/     # Complete implementation
 │   │       │   ├── cloudformation/ # Complete implementation
 │   │       │   └── dynamodb/  # Complete implementation
 │   │       └── shared/         # Error handling, shared types
@@ -219,6 +226,7 @@ localstack-explorer/
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
 - **[IAM Service Guide](docs/iam.md)** — Complete reference for IAM operations: users, groups, managed/inline policies, access keys, policy versioning, and cascading deletes.
+- **[Lambda Service Guide](docs/lambda.md)** — Complete reference for Lambda operations: functions CRUD, invoke with log output, code/config updates, versions, and aliases.
 - **[CloudFormation Service Guide](docs/cloudformation.md)** — Complete reference for CloudFormation operations: stack CRUD, update, template editor, events timeline, and cross-service resource navigation.
 - **[DynamoDB Service Guide](docs/dynamodb.md)** — Complete reference for DynamoDB operations: table management, creation, listing, and detail views.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.

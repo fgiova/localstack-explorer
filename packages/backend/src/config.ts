@@ -8,6 +8,7 @@ const ALL_SERVICES = [
 	"iam",
 	"cloudformation",
 	"dynamodb",
+	"lambda",
 ] as const;
 export type ServiceName = (typeof ALL_SERVICES)[number];
 
@@ -16,7 +17,7 @@ const configSchema = Type.Object({
 	LOCALSTACK_ENDPOINT: Type.String({ default: "http://localhost:4566" }),
 	LOCALSTACK_REGION: Type.String({ default: "us-east-1" }),
 	ENABLED_SERVICES: Type.String({
-		default: "s3,sqs,sns,iam,cloudformation,dynamodb",
+		default: "s3,sqs,sns,iam,cloudformation,dynamodb,lambda",
 	}),
 });
 
