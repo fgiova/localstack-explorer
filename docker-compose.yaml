@@ -10,7 +10,7 @@ services:
     volumes:
       - localstack-data:/var/lib/localstack
   localstack-explorer:
-    image: fgiova/localstack-explorer:test
+    image: fgiova/localstack-explorer:latest
     ports:
       - "3001:3001"
     environment:

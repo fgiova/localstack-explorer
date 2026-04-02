@@ -1,7 +1,6 @@
 import type { LambdaClient } from "@aws-sdk/client-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LambdaService } from "../../../src/plugins/lambda/service.js";
-import { AppError } from "../../../src/shared/errors.js";
 
 function createMockLambdaClient() {
 	return {
@@ -24,7 +23,8 @@ describe("LambdaService", () => {
 				Functions: [
 					{
 						FunctionName: "my-function",
-						FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function",
+						FunctionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function",
 						Runtime: "nodejs20.x",
 						Handler: "index.handler",
 						CodeSize: 1024,
@@ -43,7 +43,8 @@ describe("LambdaService", () => {
 				functions: [
 					{
 						functionName: "my-function",
-						functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function",
+						functionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function",
 						runtime: "nodejs20.x",
 						handler: "index.handler",
 						codeSize: 1024,
@@ -111,7 +112,8 @@ describe("LambdaService", () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				Configuration: {
 					FunctionName: "my-function",
-					FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function",
+					FunctionArn:
+						"arn:aws:lambda:us-east-1:000000000000:function:my-function",
 					Runtime: "nodejs20.x",
 					Handler: "index.handler",
 					Role: "arn:aws:iam::000000000000:role/my-role",
@@ -127,7 +129,10 @@ describe("LambdaService", () => {
 					Environment: { Variables: { MY_VAR: "my-value" } },
 					Architectures: ["x86_64"],
 					Layers: [
-						{ Arn: "arn:aws:lambda:us-east-1:000000000000:layer:my-layer:1", CodeSize: 512 },
+						{
+							Arn: "arn:aws:lambda:us-east-1:000000000000:layer:my-layer:1",
+							CodeSize: 512,
+						},
 					],
 					PackageType: "Zip",
 				},
@@ -137,7 +142,8 @@ describe("LambdaService", () => {
 
 			expect(result).toEqual({
 				functionName: "my-function",
-				functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function",
+				functionArn:
+					"arn:aws:lambda:us-east-1:000000000000:function:my-function",
 				runtime: "nodejs20.x",
 				handler: "index.handler",
 				role: "arn:aws:iam::000000000000:role/my-role",
@@ -153,7 +159,10 @@ describe("LambdaService", () => {
 				environment: { MY_VAR: "my-value" },
 				architectures: ["x86_64"],
 				layers: [
-					{ arn: "arn:aws:lambda:us-east-1:000000000000:layer:my-layer:1", codeSize: 512 },
+					{
+						arn: "arn:aws:lambda:us-east-1:000000000000:layer:my-layer:1",
+						codeSize: 512,
+					},
 				],
 				packageType: "Zip",
 			});
@@ -164,10 +173,12 @@ describe("LambdaService", () => {
 				// Configuration intentionally absent
 			});
 
-			await expect(service.getFunction("ghost-function")).rejects.toMatchObject({
-				statusCode: 404,
-				code: "FUNCTION_NOT_FOUND",
-			});
+			await expect(service.getFunction("ghost-function")).rejects.toMatchObject(
+				{
+					statusCode: 404,
+					code: "FUNCTION_NOT_FOUND",
+				},
+			);
 		});
 
 		it("throws AppError with 404 on ResourceNotFoundException", async () => {
@@ -196,7 +207,8 @@ describe("LambdaService", () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				Configuration: {
 					FunctionName: "no-layers-fn",
-					FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:no-layers-fn",
+					FunctionArn:
+						"arn:aws:lambda:us-east-1:000000000000:function:no-layers-fn",
 					Role: "arn:aws:iam::000000000000:role/my-role",
 					CodeSize: 0,
 					// Layers intentionally absent
@@ -505,7 +517,9 @@ describe("LambdaService", () => {
 	describe("invokeFunction", () => {
 		it("invokes a function and returns status, payload and decoded log", async () => {
 			const payloadBytes = new TextEncoder().encode('{"result":"ok"}');
-			const logBase64 = Buffer.from("START RequestId: abc\nEND\n").toString("base64");
+			const logBase64 = Buffer.from("START RequestId: abc\nEND\n").toString(
+				"base64",
+			);
 
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				StatusCode: 200,
@@ -533,7 +547,11 @@ describe("LambdaService", () => {
 				// Payload and LogResult intentionally absent
 			});
 
-			const result = await service.invokeFunction("async-fn", undefined, "Event");
+			const result = await service.invokeFunction(
+				"async-fn",
+				undefined,
+				"Event",
+			);
 
 			expect(result).toEqual({
 				statusCode: 202,
@@ -544,7 +562,9 @@ describe("LambdaService", () => {
 		});
 
 		it("returns functionError when function execution fails", async () => {
-			const errorPayload = new TextEncoder().encode('{"errorMessage":"division by zero"}');
+			const errorPayload = new TextEncoder().encode(
+				'{"errorMessage":"division by zero"}',
+			);
 
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				StatusCode: 200,
@@ -626,14 +646,16 @@ describe("LambdaService", () => {
 				Versions: [
 					{
 						Version: "1",
-						FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:1",
+						FunctionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:1",
 						Description: "Initial version",
 						LastModified: "2024-01-01T00:00:00.000+0000",
 						Runtime: "nodejs20.x",
 					},
 					{
 						Version: "$LATEST",
-						FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:$LATEST",
+						FunctionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:$LATEST",
 						Description: undefined,
 						LastModified: "2024-06-01T00:00:00.000+0000",
 						Runtime: "nodejs20.x",
@@ -648,14 +670,16 @@ describe("LambdaService", () => {
 				versions: [
 					{
 						version: "1",
-						functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:1",
+						functionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:1",
 						description: "Initial version",
 						lastModified: "2024-01-01T00:00:00.000+0000",
 						runtime: "nodejs20.x",
 					},
 					{
 						version: "$LATEST",
-						functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:$LATEST",
+						functionArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:$LATEST",
 						description: undefined,
 						lastModified: "2024-06-01T00:00:00.000+0000",
 						runtime: "nodejs20.x",
@@ -717,13 +741,15 @@ describe("LambdaService", () => {
 				Aliases: [
 					{
 						Name: "prod",
-						AliasArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:prod",
+						AliasArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:prod",
 						FunctionVersion: "5",
 						Description: "Production alias",
 					},
 					{
 						Name: "staging",
-						AliasArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:staging",
+						AliasArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:staging",
 						FunctionVersion: "4",
 						Description: undefined,
 					},
@@ -737,13 +763,15 @@ describe("LambdaService", () => {
 				aliases: [
 					{
 						name: "prod",
-						aliasArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:prod",
+						aliasArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:prod",
 						functionVersion: "5",
 						description: "Production alias",
 					},
 					{
 						name: "staging",
-						aliasArn: "arn:aws:lambda:us-east-1:000000000000:function:my-function:staging",
+						aliasArn:
+							"arn:aws:lambda:us-east-1:000000000000:function:my-function:staging",
 						functionVersion: "4",
 						description: undefined,
 					},
@@ -873,7 +901,10 @@ describe("LambdaService", () => {
 
 			const result = await service.listEventSourceMappings("my-fn");
 
-			expect(result).toEqual({ eventSourceMappings: [], nextMarker: undefined });
+			expect(result).toEqual({
+				eventSourceMappings: [],
+				nextMarker: undefined,
+			});
 		});
 
 		it("passes marker to the command", async () => {
@@ -882,7 +913,10 @@ describe("LambdaService", () => {
 				NextMarker: "next-mapping-token",
 			});
 
-			const result = await service.listEventSourceMappings("my-fn", "page-1-token");
+			const result = await service.listEventSourceMappings(
+				"my-fn",
+				"page-1-token",
+			);
 
 			expect(result?.nextMarker).toBe("next-mapping-token");
 			const call = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -1009,9 +1043,9 @@ describe("LambdaService", () => {
 			const error = new Error("Unexpected error");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.deleteEventSourceMapping("abc-123"),
-			).rejects.toThrow("Unexpected error");
+			await expect(service.deleteEventSourceMapping("abc-123")).rejects.toThrow(
+				"Unexpected error",
+			);
 		});
 	});
 
@@ -1023,7 +1057,8 @@ describe("LambdaService", () => {
 						{
 							UUID: "abc-123",
 							EventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
-							FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-fn",
+							FunctionArn:
+								"arn:aws:lambda:us-east-1:000000000000:function:my-fn",
 							State: "Enabled",
 							BatchSize: 10,
 							LastModified: new Date("2024-01-01"),

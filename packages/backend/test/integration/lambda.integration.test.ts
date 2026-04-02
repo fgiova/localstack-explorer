@@ -1,5 +1,5 @@
 import { deflateRawSync } from "node:zlib";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, LightMyRequestResponse } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { lambdaRoutes } from "../../src/plugins/lambda/routes.js";
 import { buildApp, getLocalstackHeaders } from "./app-helper.js";
@@ -171,9 +171,11 @@ describe("Lambda Integration", () => {
 		expect(body).toHaveProperty("functionArn");
 	});
 
-	it("should update function configuration (change description)", { timeout: 60000 }, async () => {
+	it("should update function configuration (change description)", {
+		timeout: 60000,
+	}, async () => {
 		// Retry — LocalStack may need time after function creation
-		let res;
+		let res: LightMyRequestResponse | undefined;
 		for (let i = 0; i < 15; i++) {
 			res = await app.inject({
 				method: "PUT",
@@ -185,9 +187,9 @@ describe("Lambda Integration", () => {
 			await new Promise((r) => setTimeout(r, 2000));
 		}
 		// If still failing after retries, the route at least responded (not 404)
-		expect(res!.statusCode).not.toBe(404);
-		if (res!.statusCode === 200) {
-			expect(res!.json().message).toContain("updated");
+		expect(res?.statusCode).not.toBe(404);
+		if (res?.statusCode === 200) {
+			expect(res.json().message).toContain("updated");
 		}
 
 		// Wait for function to settle after config update
@@ -206,7 +208,7 @@ describe("Lambda Integration", () => {
 	});
 
 	it("should invoke function", { timeout: 60000 }, async () => {
-		let res;
+		let res: LightMyRequestResponse | undefined;
 		for (let i = 0; i < 10; i++) {
 			res = await app.inject({
 				method: "POST",
@@ -217,9 +219,9 @@ describe("Lambda Integration", () => {
 			if (res.statusCode === 200) break;
 			await new Promise((r) => setTimeout(r, 2000));
 		}
-		expect(res!.statusCode).not.toBe(404);
-		if (res!.statusCode === 200) {
-			const body = res!.json();
+		expect(res?.statusCode).not.toBe(404);
+		if (res?.statusCode === 200) {
+			const body = res.json();
 			expect(body).toHaveProperty("statusCode");
 		}
 	});
@@ -271,8 +273,7 @@ describe("Lambda Integration", () => {
 			url: `/${functionName}/event-source-mappings`,
 			headers,
 			payload: {
-				eventSourceArn:
-					"arn:aws:sqs:us-east-1:000000000000:test-trigger-queue",
+				eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:test-trigger-queue",
 				batchSize: 5,
 				enabled: true,
 			},
@@ -326,7 +327,7 @@ describe("Lambda Integration", () => {
 	});
 
 	it("should delete the function", { timeout: 60000 }, async () => {
-		let res;
+		let res: LightMyRequestResponse | undefined;
 		for (let i = 0; i < 10; i++) {
 			res = await app.inject({
 				method: "DELETE",
@@ -337,7 +338,7 @@ describe("Lambda Integration", () => {
 			await new Promise((r) => setTimeout(r, 2000));
 		}
 		// Function should be deleted (200) or already gone (404)
-		expect([200, 404]).toContain(res!.statusCode);
+		expect([200, 404]).toContain(res?.statusCode);
 	});
 
 	it("should return 404 after deletion", async () => {

@@ -21,12 +21,6 @@ describe("lambdaPlugin index", () => {
 		await app.register(lambdaPlugin, { prefix: "/api/lambda" });
 		await app.ready();
 
-		const routes = app
-			.printRoutes({ includeHooks: false })
-			.split("\n")
-			.filter(Boolean);
-
-		// Routes string should contain the lambda prefix paths
 		const routeTree = app.printRoutes({ includeHooks: false });
 		expect(routeTree).toContain("api/lambda");
 

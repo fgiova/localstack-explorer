@@ -66,9 +66,7 @@ export const CreateFunctionBodySchema = Type.Object({
 	}),
 	description: Type.Optional(Type.String()),
 	timeout: Type.Optional(Type.Integer({ minimum: 1, maximum: 900 })),
-	memorySize: Type.Optional(
-		Type.Integer({ minimum: 128, maximum: 10240 }),
-	),
+	memorySize: Type.Optional(Type.Integer({ minimum: 128, maximum: 10240 })),
 	environment: Type.Optional(EnvironmentVariableSchema),
 	architectures: Type.Optional(Type.Array(Type.String())),
 });
@@ -88,9 +86,7 @@ export const UpdateFunctionConfigBodySchema = Type.Object({
 	runtime: Type.Optional(Type.String()),
 	description: Type.Optional(Type.String()),
 	timeout: Type.Optional(Type.Integer({ minimum: 1, maximum: 900 })),
-	memorySize: Type.Optional(
-		Type.Integer({ minimum: 128, maximum: 10240 }),
-	),
+	memorySize: Type.Optional(Type.Integer({ minimum: 128, maximum: 10240 })),
 	environment: Type.Optional(EnvironmentVariableSchema),
 	role: Type.Optional(Type.String()),
 });

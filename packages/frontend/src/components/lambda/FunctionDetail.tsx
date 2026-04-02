@@ -101,9 +101,7 @@ function VersionsTab({ functionName }: { functionName: string }) {
 						</TableCell>
 						<TableCell>{v.runtime}</TableCell>
 						<TableCell className="text-sm text-muted-foreground">
-							{v.lastModified
-								? new Date(v.lastModified).toLocaleString()
-								: "—"}
+							{v.lastModified ? new Date(v.lastModified).toLocaleString() : "—"}
 						</TableCell>
 					</TableRow>
 				))}
@@ -253,10 +251,7 @@ function TriggersTab({ functionName }: { functionName: string }) {
 				<Card>
 					<CardContent className="space-y-3 pt-4">
 						<div className="space-y-1">
-							<label
-								htmlFor="eventSourceArn"
-								className="text-sm font-medium"
-							>
+							<label htmlFor="eventSourceArn" className="text-sm font-medium">
 								Event Source ARN
 							</label>
 							<input
@@ -290,9 +285,7 @@ function TriggersTab({ functionName }: { functionName: string }) {
 						<Button
 							size="sm"
 							onClick={handleCreate}
-							disabled={
-								!eventSourceArn.trim() || createTrigger.isPending
-							}
+							disabled={!eventSourceArn.trim() || createTrigger.isPending}
 						>
 							{createTrigger.isPending ? "Creating..." : "Create"}
 						</Button>
@@ -349,9 +342,7 @@ function TriggersTab({ functionName }: { functionName: string }) {
 					{/* Event Source Mappings (SQS, DynamoDB Streams, Kinesis, etc.) */}
 					{mappings.length > 0 && (
 						<div className="space-y-2">
-							<h4 className="text-sm font-medium">
-								Event Source Mappings
-							</h4>
+							<h4 className="text-sm font-medium">Event Source Mappings</h4>
 							<Table>
 								<TableHeader>
 									<TableRow>
@@ -364,19 +355,15 @@ function TriggersTab({ functionName }: { functionName: string }) {
 								</TableHeader>
 								<TableBody>
 									{mappings.map((m) => {
-										const arnParts =
-											m.eventSourceArn?.split(":") ?? [];
+										const arnParts = m.eventSourceArn?.split(":") ?? [];
 										const service = arnParts[2] ?? "unknown";
 										const resource =
-											arnParts.slice(5).join(":") ||
-											m.eventSourceArn;
+											arnParts.slice(5).join(":") || m.eventSourceArn;
 										return (
 											<TableRow key={m.uuid}>
 												<TableCell>
 													<div>
-														<span className="font-medium">
-															{resource}
-														</span>
+														<span className="font-medium">{resource}</span>
 														<span className="ml-2 text-xs text-muted-foreground">
 															({service})
 														</span>
@@ -388,31 +375,23 @@ function TriggersTab({ functionName }: { functionName: string }) {
 												<TableCell>
 													<Badge
 														variant={
-															m.state === "Enabled"
-																? "default"
-																: "secondary"
+															m.state === "Enabled" ? "default" : "secondary"
 														}
 													>
 														{m.state ?? "Unknown"}
 													</Badge>
 												</TableCell>
-												<TableCell>
-													{m.batchSize ?? "—"}
-												</TableCell>
+												<TableCell>{m.batchSize ?? "—"}</TableCell>
 												<TableCell className="text-sm text-muted-foreground">
 													{m.lastModified
-														? new Date(
-																m.lastModified,
-															).toLocaleString()
+														? new Date(m.lastModified).toLocaleString()
 														: "—"}
 												</TableCell>
 												<TableCell>
 													<Button
 														variant="ghost"
 														size="icon"
-														onClick={() =>
-															setDeleteTarget(m.uuid)
-														}
+														onClick={() => setDeleteTarget(m.uuid)}
 													>
 														<Trash2 className="h-4 w-4 text-destructive" />
 													</Button>
@@ -427,10 +406,7 @@ function TriggersTab({ functionName }: { functionName: string }) {
 				</div>
 			)}
 
-			<Dialog
-				open={!!deleteTarget}
-				onOpenChange={() => setDeleteTarget(null)}
-			>
+			<Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Delete Event Source Mapping</DialogTitle>
@@ -439,10 +415,7 @@ function TriggersTab({ functionName }: { functionName: string }) {
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button
-							variant="outline"
-							onClick={() => setDeleteTarget(null)}
-						>
+						<Button variant="outline" onClick={() => setDeleteTarget(null)}>
 							Cancel
 						</Button>
 						<Button
@@ -582,9 +555,7 @@ export function FunctionDetail({ functionName }: FunctionDetailProps) {
 									<AttributeItem
 										label="Timeout"
 										value={
-											fn?.timeout !== undefined
-												? `${fn.timeout}s`
-												: undefined
+											fn?.timeout !== undefined ? `${fn.timeout}s` : undefined
 										}
 									/>
 									<AttributeItem
@@ -598,18 +569,12 @@ export function FunctionDetail({ functionName }: FunctionDetailProps) {
 										}
 									/>
 									<AttributeItem label="State" value={fn?.state} />
-									<AttributeItem
-										label="Package Type"
-										value={fn?.packageType}
-									/>
+									<AttributeItem label="Package Type" value={fn?.packageType} />
 									<AttributeItem
 										label="Architectures"
 										value={fn?.architectures?.join(", ")}
 									/>
-									<AttributeItem
-										label="SHA256"
-										value={fn?.codeSha256}
-									/>
+									<AttributeItem label="SHA256" value={fn?.codeSha256} />
 								</div>
 
 								{fn?.environment?.variables &&

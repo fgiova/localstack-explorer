@@ -31,11 +31,7 @@ export function InvokeFunctionForm({ functionName }: InvokeFunctionFormProps) {
 	let parsedPayload: string | undefined;
 	if (result?.payload) {
 		try {
-			parsedPayload = JSON.stringify(
-				JSON.parse(atob(result.payload)),
-				null,
-				2,
-			);
+			parsedPayload = JSON.stringify(JSON.parse(atob(result.payload)), null, 2);
 		} catch {
 			try {
 				parsedPayload = atob(result.payload);
@@ -82,10 +78,7 @@ export function InvokeFunctionForm({ functionName }: InvokeFunctionFormProps) {
 				/>
 			</div>
 
-			<Button
-				onClick={handleInvoke}
-				disabled={invokeFunction.isPending}
-			>
+			<Button onClick={handleInvoke} disabled={invokeFunction.isPending}>
 				{invokeFunction.isPending ? (
 					<>
 						<div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />

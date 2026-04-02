@@ -132,8 +132,7 @@ export function useListFunctions() {
 export function useGetFunction(functionName: string) {
 	return useQuery({
 		queryKey: ["lambda", "function", functionName],
-		queryFn: () =>
-			apiClient.get<LambdaFunction>(`/lambda/${functionName}`),
+		queryFn: () => apiClient.get<LambdaFunction>(`/lambda/${functionName}`),
 		enabled: !!functionName,
 	});
 }
@@ -232,10 +231,7 @@ export function useInvokeFunction() {
 export function useCreateEventSourceMapping() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: ({
-			functionName,
-			...body
-		}: CreateEventSourceMappingRequest) =>
+		mutationFn: ({ functionName, ...body }: CreateEventSourceMappingRequest) =>
 			apiClient.post<{ message: string; uuid: string }>(
 				`/lambda/${functionName}/event-source-mappings`,
 				body,
@@ -251,10 +247,7 @@ export function useCreateEventSourceMapping() {
 export function useDeleteEventSourceMapping() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: ({
-			uuid,
-			functionName,
-		}: { uuid: string; functionName: string }) =>
+		mutationFn: ({ uuid }: { uuid: string; functionName: string }) =>
 			apiClient.delete<{ success: boolean }>(
 				`/lambda/event-source-mappings/${uuid}`,
 			),

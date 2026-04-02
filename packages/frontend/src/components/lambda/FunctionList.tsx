@@ -131,8 +131,8 @@ export function FunctionList() {
 					<DialogHeader>
 						<DialogTitle>Delete Function</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete function &quot;{deleteTarget}&quot;?
-							This action cannot be undone.
+							Are you sure you want to delete function &quot;{deleteTarget}
+							&quot;? This action cannot be undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>

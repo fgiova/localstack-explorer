@@ -1,4 +1,5 @@
 import {
+	type Architecture,
 	CreateEventSourceMappingCommand,
 	CreateFunctionCommand,
 	DeleteEventSourceMappingCommand,
@@ -6,7 +7,6 @@ import {
 	type EventSourcePosition,
 	GetFunctionCommand,
 	GetPolicyCommand,
-	type Architecture,
 	type InvocationType,
 	InvokeCommand,
 	type LambdaClient,
@@ -336,7 +336,7 @@ export class LambdaService {
 						stmt.Principal?.Service,
 				)
 				.map((stmt) => {
-					const service = stmt.Principal!.Service!;
+					const service = stmt.Principal?.Service;
 					const sourceArn =
 						stmt.Condition?.ArnLike?.["AWS:SourceArn"] ??
 						stmt.Condition?.ArnLike?.["aws:SourceArn"];
@@ -362,19 +362,19 @@ export class LambdaService {
 					...(marker && { Marker: marker }),
 				}),
 			);
-			const eventSourceMappings = (
-				response.EventSourceMappings ?? []
-			).map((m) => ({
-				uuid: m.UUID ?? "",
-				eventSourceArn: m.EventSourceArn,
-				functionArn: m.FunctionArn,
-				state: m.State,
-				batchSize: m.BatchSize,
-				lastModified: m.LastModified?.toISOString(),
-				maximumBatchingWindowInSeconds: m.MaximumBatchingWindowInSeconds,
-				startingPosition: m.StartingPosition,
-				enabled: m.State === "Enabled" || m.State === "Creating",
-			}));
+			const eventSourceMappings = (response.EventSourceMappings ?? []).map(
+				(m) => ({
+					uuid: m.UUID ?? "",
+					eventSourceArn: m.EventSourceArn,
+					functionArn: m.FunctionArn,
+					state: m.State,
+					batchSize: m.BatchSize,
+					lastModified: m.LastModified?.toISOString(),
+					maximumBatchingWindowInSeconds: m.MaximumBatchingWindowInSeconds,
+					startingPosition: m.StartingPosition,
+					enabled: m.State === "Enabled" || m.State === "Creating",
+				}),
+			);
 			return { eventSourceMappings, nextMarker: response.NextMarker };
 		} catch (err) {
 			mapLambdaError(err, functionName);

@@ -29,7 +29,9 @@ interface MockLambdaService {
 
 function createMockLambdaService(): MockLambdaService {
 	return {
-		listFunctions: vi.fn().mockResolvedValue({ functions: [], nextMarker: undefined }),
+		listFunctions: vi
+			.fn()
+			.mockResolvedValue({ functions: [], nextMarker: undefined }),
 		createFunction: vi.fn().mockResolvedValue({
 			message: "Function 'my-function' created successfully",
 		}),
@@ -66,10 +68,21 @@ function createMockLambdaService(): MockLambdaService {
 			functionError: undefined,
 			logResult: undefined,
 		}),
-		listVersions: vi.fn().mockResolvedValue({ versions: [], nextMarker: undefined }),
-		listAliases: vi.fn().mockResolvedValue({ aliases: [], nextMarker: undefined }),
-		getFunctionTriggers: vi.fn().mockResolvedValue({ eventSourceMappings: [], policyTriggers: [], nextMarker: undefined }),
-		createEventSourceMapping: vi.fn().mockResolvedValue({ message: "Event source mapping created successfully", uuid: "new-uuid" }),
+		listVersions: vi
+			.fn()
+			.mockResolvedValue({ versions: [], nextMarker: undefined }),
+		listAliases: vi
+			.fn()
+			.mockResolvedValue({ aliases: [], nextMarker: undefined }),
+		getFunctionTriggers: vi.fn().mockResolvedValue({
+			eventSourceMappings: [],
+			policyTriggers: [],
+			nextMarker: undefined,
+		}),
+		createEventSourceMapping: vi.fn().mockResolvedValue({
+			message: "Event source mapping created successfully",
+			uuid: "new-uuid",
+		}),
 		deleteEventSourceMapping: vi.fn().mockResolvedValue({ success: true }),
 	};
 }
@@ -97,7 +110,9 @@ describe("Lambda Routes", () => {
 
 		mockService = createMockLambdaService();
 
-		(LambdaServiceClass as unknown as Mock).mockImplementation(() => mockService);
+		(LambdaServiceClass as unknown as Mock).mockImplementation(
+			() => mockService,
+		);
 
 		const mockClientCache = {
 			getClients: vi.fn().mockReturnValue({ lambda: {} }),
@@ -234,7 +249,11 @@ describe("Lambda Routes", () => {
 		it("should return 404 when function does not exist", async () => {
 			const { AppError } = await import("../../../src/shared/errors.js");
 			mockService.getFunction.mockRejectedValueOnce(
-				new AppError("Function 'missing-fn' not found", 404, "FUNCTION_NOT_FOUND"),
+				new AppError(
+					"Function 'missing-fn' not found",
+					404,
+					"FUNCTION_NOT_FOUND",
+				),
 			);
 			const response = await app.inject({
 				method: "GET",
