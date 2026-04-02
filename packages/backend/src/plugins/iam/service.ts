@@ -576,6 +576,7 @@ export class IAMService {
 
 			return {
 				versionId: resolvedVersionId ?? "",
+				isDefaultVersion: response.PolicyVersion?.IsDefaultVersion ?? false,
 				document,
 			};
 		} catch (err) {

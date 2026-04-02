@@ -39,6 +39,7 @@ export class SQSService {
 		const queueUrls = response.QueueUrls ?? [];
 		const queues = queueUrls.map((url) => {
 			const parts = url.split("/");
+			/* v8 ignore next */
 			const queueName = parts[parts.length - 1] ?? "";
 			return { queueUrl: url, queueName };
 		});

@@ -17,4 +17,7 @@ if (!existsSync(path.join(bundleDir, "bundle.cjs"))) {
 cpSync(path.join(bundleDir, "bundle.cjs"), path.join(desktopDir, "bundle.cjs"));
 cpSync(path.join(bundleDir, "public"), path.join(desktopDir, "public"), { recursive: true });
 
+// Copy desktop icon from shared icons directory
+cpSync(path.join(rootDir, "icons", "icon-desktop.png"), path.join(desktopDir, "icon.png"));
+
 console.log("Assets copied. Running electron-builder...");

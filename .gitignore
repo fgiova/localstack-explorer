@@ -10,6 +10,8 @@ packages/desktop/out
 packages/desktop/.stage
 packages/desktop/bundle.cjs
 packages/desktop/public
+packages/desktop/icon.png
+packages/frontend/public/*.png
 
 # Environment variables
 .env

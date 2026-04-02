@@ -4,6 +4,14 @@ import { checkLocalstackHealth } from "../src/health.js";
 const ENDPOINT = "http://localhost:4566";
 const REGION = "us-east-1";
 
+function mockFetchOk(services: Record<string, string> = {}) {
+	return {
+		ok: true,
+		status: 200,
+		json: () => Promise.resolve({ services }),
+	};
+}
+
 describe("checkLocalstackHealth", () => {
 	beforeEach(() => {
 		vi.stubGlobal("fetch", vi.fn());
@@ -13,11 +21,10 @@ describe("checkLocalstackHealth", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("returns connected: true when fetch resolves with an ok response", async () => {
-		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-			ok: true,
-			status: 200,
-		});
+	it("returns connected: true with active services when fetch resolves with an ok response", async () => {
+		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+			mockFetchOk({ s3: "running", sqs: "running", lambda: "running" }),
+		);
 
 		const result = await checkLocalstackHealth(ENDPOINT, REGION);
 
@@ -25,11 +32,39 @@ describe("checkLocalstackHealth", () => {
 			connected: true,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: expect.arrayContaining(["s3", "sqs"]),
 		});
+		// lambda is not in enabled services, so it should be excluded
+		expect(result.services).not.toContain("lambda");
 		expect(fetch).toHaveBeenCalledWith(
 			`${ENDPOINT}/_localstack/health`,
 			expect.objectContaining({ signal: expect.any(AbortSignal) }),
 		);
+	});
+
+	it("filters out services that are not running or available", async () => {
+		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+			mockFetchOk({ s3: "running", sqs: "disabled", sns: "available" }),
+		);
+
+		const result = await checkLocalstackHealth(ENDPOINT, REGION);
+
+		expect(result.services).toContain("s3");
+		expect(result.services).toContain("sns");
+		expect(result.services).not.toContain("sqs");
+	});
+
+	it("returns empty services when response has no services field", async () => {
+		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			json: () => Promise.resolve({}),
+		});
+
+		const result = await checkLocalstackHealth(ENDPOINT, REGION);
+
+		expect(result.connected).toBe(true);
+		expect(result.services).toEqual([]);
 	});
 
 	it("returns connected: false with HTTP error when fetch resolves with a non-ok response (500)", async () => {
@@ -44,6 +79,7 @@ describe("checkLocalstackHealth", () => {
 			connected: false,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: [],
 			error: "HTTP 500",
 		});
 	});
@@ -60,6 +96,7 @@ describe("checkLocalstackHealth", () => {
 			connected: false,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: [],
 			error: "HTTP 404",
 		});
 	});
@@ -74,6 +111,7 @@ describe("checkLocalstackHealth", () => {
 			connected: false,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: [],
 			error: "Failed to fetch",
 		});
 	});
@@ -87,6 +125,7 @@ describe("checkLocalstackHealth", () => {
 			connected: false,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: [],
 			error: "Unknown error",
 		});
 	});
@@ -104,6 +143,7 @@ describe("checkLocalstackHealth", () => {
 			connected: false,
 			endpoint: ENDPOINT,
 			region: REGION,
+			services: [],
 			error: "The operation was aborted.",
 		});
 	});
@@ -112,10 +152,9 @@ describe("checkLocalstackHealth", () => {
 		const customEndpoint = "http://my-localstack:4567";
 		const customRegion = "eu-west-1";
 
-		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-			ok: true,
-			status: 200,
-		});
+		(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+			mockFetchOk({ s3: "running" }),
+		);
 
 		const result = await checkLocalstackHealth(customEndpoint, customRegion);
 
