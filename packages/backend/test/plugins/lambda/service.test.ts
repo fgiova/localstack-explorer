@@ -829,4 +829,401 @@ describe("LambdaService", () => {
 			);
 		});
 	});
+
+	describe("listEventSourceMappings", () => {
+		it("returns formatted mapping list with state-derived enabled flag", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				EventSourceMappings: [
+					{
+						UUID: "abc-123",
+						EventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+						FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-fn",
+						State: "Enabled",
+						BatchSize: 10,
+						LastModified: new Date("2024-01-01"),
+						MaximumBatchingWindowInSeconds: 0,
+						StartingPosition: undefined,
+					},
+				],
+				NextMarker: undefined,
+			});
+
+			const result = await service.listEventSourceMappings("my-fn");
+
+			expect(result).toEqual({
+				eventSourceMappings: [
+					{
+						uuid: "abc-123",
+						eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+						functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-fn",
+						state: "Enabled",
+						batchSize: 10,
+						lastModified: new Date("2024-01-01").toISOString(),
+						maximumBatchingWindowInSeconds: 0,
+						startingPosition: undefined,
+						enabled: true,
+					},
+				],
+				nextMarker: undefined,
+			});
+		});
+
+		it("returns empty list when EventSourceMappings is undefined", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.listEventSourceMappings("my-fn");
+
+			expect(result).toEqual({ eventSourceMappings: [], nextMarker: undefined });
+		});
+
+		it("passes marker to the command", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				EventSourceMappings: [],
+				NextMarker: "next-mapping-token",
+			});
+
+			const result = await service.listEventSourceMappings("my-fn", "page-1-token");
+
+			expect(result?.nextMarker).toBe("next-mapping-token");
+			const call = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(call.input).toMatchObject({
+				FunctionName: "my-fn",
+				Marker: "page-1-token",
+			});
+		});
+
+		it("throws AppError 404 on ResourceNotFoundException", async () => {
+			const error = Object.assign(new Error("Function not found"), {
+				name: "ResourceNotFoundException",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(
+				service.listEventSourceMappings("missing-fn"),
+			).rejects.toMatchObject({
+				statusCode: 404,
+				code: "FUNCTION_NOT_FOUND",
+			});
+		});
+	});
+
+	describe("createEventSourceMapping", () => {
+		it("creates mapping and returns uuid", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				UUID: "new-uuid-123",
+			});
+
+			const result = await service.createEventSourceMapping("my-fn", {
+				eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+			});
+
+			expect(result).toEqual({
+				message: "Event source mapping created successfully",
+				uuid: "new-uuid-123",
+			});
+			expect(client.send).toHaveBeenCalledOnce();
+		});
+
+		it("passes optional params (batchSize, startingPosition, enabled)", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				UUID: "new-uuid-456",
+			});
+
+			await service.createEventSourceMapping("my-fn", {
+				eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				batchSize: 5,
+				startingPosition: "TRIM_HORIZON",
+				enabled: false,
+			});
+
+			const call = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(call.input).toMatchObject({
+				FunctionName: "my-fn",
+				EventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				BatchSize: 5,
+				StartingPosition: "TRIM_HORIZON",
+				Enabled: false,
+			});
+		});
+
+		it("throws AppError 409 on ResourceConflictException", async () => {
+			const error = Object.assign(new Error("Mapping already exists"), {
+				name: "ResourceConflictException",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(
+				service.createEventSourceMapping("my-fn", {
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				}),
+			).rejects.toMatchObject({
+				statusCode: 409,
+				code: "FUNCTION_CONFLICT",
+			});
+		});
+
+		it("throws AppError 400 on InvalidParameterValueException", async () => {
+			const error = Object.assign(new Error("Invalid batch size"), {
+				name: "InvalidParameterValueException",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(
+				service.createEventSourceMapping("my-fn", {
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+					batchSize: -1,
+				}),
+			).rejects.toMatchObject({
+				statusCode: 400,
+				code: "INVALID_PARAMETER",
+			});
+		});
+	});
+
+	describe("deleteEventSourceMapping", () => {
+		it("deletes mapping successfully", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.deleteEventSourceMapping("abc-123");
+
+			expect(result).toEqual({ success: true });
+			expect(client.send).toHaveBeenCalledOnce();
+		});
+
+		it("throws AppError 404 on ResourceNotFoundException", async () => {
+			const error = Object.assign(new Error("Mapping not found"), {
+				name: "ResourceNotFoundException",
+			});
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(
+				service.deleteEventSourceMapping("missing-uuid"),
+			).rejects.toMatchObject({
+				statusCode: 404,
+				code: "EVENT_SOURCE_MAPPING_NOT_FOUND",
+				message: "Event source mapping 'missing-uuid' not found",
+			});
+		});
+
+		it("re-throws unknown errors", async () => {
+			const error = new Error("Unexpected error");
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+			await expect(
+				service.deleteEventSourceMapping("abc-123"),
+			).rejects.toThrow("Unexpected error");
+		});
+	});
+
+	describe("getFunctionTriggers", () => {
+		it("combines event source mappings and policy triggers", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [
+						{
+							UUID: "abc-123",
+							EventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+							FunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-fn",
+							State: "Enabled",
+							BatchSize: 10,
+							LastModified: new Date("2024-01-01"),
+							MaximumBatchingWindowInSeconds: 0,
+							StartingPosition: undefined,
+						},
+					],
+					NextMarker: undefined,
+				})
+				.mockResolvedValueOnce({
+					Policy: JSON.stringify({
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Sid: "AllowS3",
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "s3.amazonaws.com" },
+								Condition: {
+									ArnLike: { "AWS:SourceArn": "arn:aws:s3:::my-bucket" },
+								},
+							},
+						],
+					}),
+				});
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result).toEqual({
+				eventSourceMappings: [
+					{
+						uuid: "abc-123",
+						eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+						functionArn: "arn:aws:lambda:us-east-1:000000000000:function:my-fn",
+						state: "Enabled",
+						batchSize: 10,
+						lastModified: new Date("2024-01-01").toISOString(),
+						maximumBatchingWindowInSeconds: 0,
+						startingPosition: undefined,
+						enabled: true,
+					},
+				],
+				policyTriggers: [
+					{
+						sid: "AllowS3",
+						service: "s3.amazonaws.com",
+						sourceArn: "arn:aws:s3:::my-bucket",
+					},
+				],
+				nextMarker: undefined,
+			});
+		});
+
+		it("returns empty policyTriggers when no policy exists (ResourceNotFoundException)", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockRejectedValueOnce(
+					Object.assign(new Error("No policy"), {
+						name: "ResourceNotFoundException",
+					}),
+				);
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result).toEqual({
+				eventSourceMappings: [],
+				policyTriggers: [],
+				nextMarker: undefined,
+			});
+		});
+
+		it("parses policy with multiple statements", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockResolvedValueOnce({
+					Policy: JSON.stringify({
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Sid: "AllowS3",
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "s3.amazonaws.com" },
+								Condition: {
+									ArnLike: { "AWS:SourceArn": "arn:aws:s3:::bucket-one" },
+								},
+							},
+							{
+								Sid: "AllowSNS",
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "sns.amazonaws.com" },
+								Condition: {
+									ArnLike: {
+										"AWS:SourceArn":
+											"arn:aws:sns:us-east-1:000000000000:my-topic",
+									},
+								},
+							},
+						],
+					}),
+				});
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result.policyTriggers).toHaveLength(2);
+			expect(result.policyTriggers[0]).toMatchObject({
+				sid: "AllowS3",
+				service: "s3.amazonaws.com",
+				sourceArn: "arn:aws:s3:::bucket-one",
+			});
+			expect(result.policyTriggers[1]).toMatchObject({
+				sid: "AllowSNS",
+				service: "sns.amazonaws.com",
+				sourceArn: "arn:aws:sns:us-east-1:000000000000:my-topic",
+			});
+		});
+
+		it("filters out Deny statements and non-InvokeFunction actions", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockResolvedValueOnce({
+					Policy: JSON.stringify({
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Sid: "DenyS3",
+								Effect: "Deny",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "s3.amazonaws.com" },
+							},
+							{
+								Sid: "AllowGetFunction",
+								Effect: "Allow",
+								Action: "lambda:GetFunction",
+								Principal: { Service: "s3.amazonaws.com" },
+							},
+							{
+								Sid: "AllowSNS",
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "sns.amazonaws.com" },
+								Condition: {
+									ArnLike: {
+										"AWS:SourceArn":
+											"arn:aws:sns:us-east-1:000000000000:my-topic",
+									},
+								},
+							},
+						],
+					}),
+				});
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result.policyTriggers).toHaveLength(1);
+			expect(result.policyTriggers[0]).toMatchObject({
+				sid: "AllowSNS",
+				service: "sns.amazonaws.com",
+			});
+		});
+
+		it("handles missing Condition/ArnLike in policy statements", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					EventSourceMappings: [],
+					NextMarker: undefined,
+				})
+				.mockResolvedValueOnce({
+					Policy: JSON.stringify({
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Sid: "AllowNoCondition",
+								Effect: "Allow",
+								Action: "lambda:InvokeFunction",
+								Principal: { Service: "events.amazonaws.com" },
+								// Condition intentionally absent
+							},
+						],
+					}),
+				});
+
+			const result = await service.getFunctionTriggers("my-fn");
+
+			expect(result.policyTriggers).toHaveLength(1);
+			expect(result.policyTriggers[0]).toEqual({
+				sid: "AllowNoCondition",
+				service: "events.amazonaws.com",
+				sourceArn: undefined,
+			});
+		});
+	});
 });

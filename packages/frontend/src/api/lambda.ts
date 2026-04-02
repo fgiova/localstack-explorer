@@ -50,6 +50,38 @@ interface ListAliasesResponse {
 	aliases: FunctionAlias[];
 }
 
+export interface EventSourceMapping {
+	uuid: string;
+	eventSourceArn?: string;
+	functionArn?: string;
+	state?: string;
+	batchSize?: number;
+	lastModified?: string;
+	maximumBatchingWindowInSeconds?: number;
+	startingPosition?: string;
+	enabled?: boolean;
+}
+
+export interface PolicyTrigger {
+	sid: string;
+	service: string;
+	sourceArn?: string;
+}
+
+interface FunctionTriggersResponse {
+	eventSourceMappings: EventSourceMapping[];
+	policyTriggers: PolicyTrigger[];
+}
+
+interface CreateEventSourceMappingRequest {
+	functionName: string;
+	eventSourceArn: string;
+	batchSize?: number;
+	maximumBatchingWindowInSeconds?: number;
+	startingPosition?: string;
+	enabled?: boolean;
+}
+
 interface CreateFunctionRequest {
 	functionName: string;
 	runtime: string;
@@ -124,6 +156,17 @@ export function useListAliases(functionName: string) {
 	});
 }
 
+export function useFunctionTriggers(functionName: string) {
+	return useQuery({
+		queryKey: ["lambda", "triggers", functionName],
+		queryFn: () =>
+			apiClient.get<FunctionTriggersResponse>(
+				`/lambda/${functionName}/triggers`,
+			),
+		enabled: !!functionName,
+	});
+}
+
 // --- Mutation hooks ---
 
 export function useCreateFunction() {
@@ -183,5 +226,42 @@ export function useInvokeFunction() {
 				`/lambda/${functionName}/invoke`,
 				body,
 			),
+	});
+}
+
+export function useCreateEventSourceMapping() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			functionName,
+			...body
+		}: CreateEventSourceMappingRequest) =>
+			apiClient.post<{ message: string; uuid: string }>(
+				`/lambda/${functionName}/event-source-mappings`,
+				body,
+			),
+		onSuccess: (_data, { functionName }) => {
+			queryClient.invalidateQueries({
+				queryKey: ["lambda", "triggers", functionName],
+			});
+		},
+	});
+}
+
+export function useDeleteEventSourceMapping() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			uuid,
+			functionName,
+		}: { uuid: string; functionName: string }) =>
+			apiClient.delete<{ success: boolean }>(
+				`/lambda/event-source-mappings/${uuid}`,
+			),
+		onSuccess: (_data, { functionName }) => {
+			queryClient.invalidateQueries({
+				queryKey: ["lambda", "triggers", functionName],
+			});
+		},
 	});
 }

@@ -52,7 +52,7 @@ async function main() {
 	// Register localstack config plugin (decorates request with localstackConfig)
 	await app.register(localstackConfigPlugin);
 
-	// Register client cache plugin (decorates instance with clientCache)
+	// Register client cache plugin (decorates instance with clientCache)ho
 	await app.register(clientCachePlugin);
 
 	// Health check

@@ -1,12 +1,17 @@
 import {
+	CreateEventSourceMappingCommand,
 	CreateFunctionCommand,
+	DeleteEventSourceMappingCommand,
 	DeleteFunctionCommand,
+	type EventSourcePosition,
 	GetFunctionCommand,
+	GetPolicyCommand,
 	type Architecture,
 	type InvocationType,
 	InvokeCommand,
 	type LambdaClient,
 	ListAliasesCommand,
+	ListEventSourceMappingsCommand,
 	ListFunctionsCommand,
 	ListVersionsByFunctionCommand,
 	type Runtime,
@@ -290,6 +295,145 @@ export class LambdaService {
 			return { aliases, nextMarker: response.NextMarker };
 		} catch (err) {
 			mapLambdaError(err, functionName);
+		}
+	}
+
+	async getFunctionTriggers(functionName: string, marker?: string) {
+		// Combine event source mappings + resource-based policy triggers (S3, SNS, etc.)
+		const [eventSourceMappings, policyTriggers] = await Promise.all([
+			this.listEventSourceMappings(functionName, marker),
+			this.getResourcePolicyTriggers(functionName),
+		]);
+		return {
+			eventSourceMappings: eventSourceMappings?.eventSourceMappings ?? [],
+			policyTriggers,
+			nextMarker: eventSourceMappings?.nextMarker,
+		};
+	}
+
+	private async getResourcePolicyTriggers(functionName: string) {
+		try {
+			const response = await this.client.send(
+				new GetPolicyCommand({ FunctionName: functionName }),
+			);
+			if (!response.Policy) return [];
+			const policy = JSON.parse(response.Policy) as {
+				Statement?: Array<{
+					Sid?: string;
+					Effect?: string;
+					Principal?: { Service?: string };
+					Action?: string;
+					Condition?: {
+						ArnLike?: Record<string, string>;
+					};
+				}>;
+			};
+			return (policy.Statement ?? [])
+				.filter(
+					(stmt) =>
+						stmt.Effect === "Allow" &&
+						stmt.Action === "lambda:InvokeFunction" &&
+						stmt.Principal?.Service,
+				)
+				.map((stmt) => {
+					const service = stmt.Principal!.Service!;
+					const sourceArn =
+						stmt.Condition?.ArnLike?.["AWS:SourceArn"] ??
+						stmt.Condition?.ArnLike?.["aws:SourceArn"];
+					return {
+						sid: stmt.Sid ?? "",
+						service,
+						sourceArn,
+					};
+				});
+		} catch (err) {
+			const error = err as Error & { name: string };
+			// No policy means no resource-based triggers
+			if (error.name === "ResourceNotFoundException") return [];
+			throw error;
+		}
+	}
+
+	async listEventSourceMappings(functionName: string, marker?: string) {
+		try {
+			const response = await this.client.send(
+				new ListEventSourceMappingsCommand({
+					FunctionName: functionName,
+					...(marker && { Marker: marker }),
+				}),
+			);
+			const eventSourceMappings = (
+				response.EventSourceMappings ?? []
+			).map((m) => ({
+				uuid: m.UUID ?? "",
+				eventSourceArn: m.EventSourceArn,
+				functionArn: m.FunctionArn,
+				state: m.State,
+				batchSize: m.BatchSize,
+				lastModified: m.LastModified?.toISOString(),
+				maximumBatchingWindowInSeconds: m.MaximumBatchingWindowInSeconds,
+				startingPosition: m.StartingPosition,
+				enabled: m.State === "Enabled" || m.State === "Creating",
+			}));
+			return { eventSourceMappings, nextMarker: response.NextMarker };
+		} catch (err) {
+			mapLambdaError(err, functionName);
+		}
+	}
+
+	async createEventSourceMapping(
+		functionName: string,
+		params: {
+			eventSourceArn: string;
+			batchSize?: number;
+			maximumBatchingWindowInSeconds?: number;
+			startingPosition?: string;
+			enabled?: boolean;
+		},
+	) {
+		try {
+			const response = await this.client.send(
+				new CreateEventSourceMappingCommand({
+					FunctionName: functionName,
+					EventSourceArn: params.eventSourceArn,
+					...(params.batchSize && { BatchSize: params.batchSize }),
+					...(params.maximumBatchingWindowInSeconds !== undefined && {
+						MaximumBatchingWindowInSeconds:
+							params.maximumBatchingWindowInSeconds,
+					}),
+					...(params.startingPosition && {
+						StartingPosition: params.startingPosition as EventSourcePosition,
+					}),
+					...(params.enabled !== undefined && {
+						Enabled: params.enabled,
+					}),
+				}),
+			);
+			return {
+				message: `Event source mapping created successfully`,
+				uuid: response.UUID ?? "",
+			};
+		} catch (err) {
+			mapLambdaError(err, functionName);
+		}
+	}
+
+	async deleteEventSourceMapping(uuid: string) {
+		try {
+			await this.client.send(
+				new DeleteEventSourceMappingCommand({ UUID: uuid }),
+			);
+			return { success: true };
+		} catch (err) {
+			const error = err as Error & { name: string };
+			if (error.name === "ResourceNotFoundException") {
+				throw new AppError(
+					`Event source mapping '${uuid}' not found`,
+					404,
+					"EVENT_SOURCE_MAPPING_NOT_FOUND",
+				);
+			}
+			throw error;
 		}
 	}
 }

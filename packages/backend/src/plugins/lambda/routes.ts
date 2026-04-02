@@ -1,10 +1,14 @@
 import type { FastifyInstance } from "fastify";
 import { ErrorResponseSchema } from "../../shared/types.js";
 import {
+	CreateEventSourceMappingBodySchema,
+	CreateEventSourceMappingResponseSchema,
 	CreateFunctionBodySchema,
 	DeleteResponseSchema,
+	EventSourceMappingParamsSchema,
 	FunctionDetailSchema,
 	FunctionNameParamsSchema,
+	FunctionTriggersResponseSchema,
 	InvokeFunctionBodySchema,
 	InvokeFunctionResponseSchema,
 	ListAliasesResponseSchema,
@@ -236,6 +240,79 @@ export async function lambdaRoutes(app: FastifyInstance) {
 			const { functionName } = request.params as { functionName: string };
 			const { marker } = request.query as { marker?: string };
 			return service.listAliases(functionName, marker);
+		},
+	});
+
+	// List all triggers (event source mappings + resource policy triggers)
+	app.get("/:functionName/triggers", {
+		schema: {
+			params: FunctionNameParamsSchema,
+			response: {
+				200: FunctionTriggersResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new LambdaService(clients.lambda);
+			const { functionName } = request.params as { functionName: string };
+			const { marker } = request.query as { marker?: string };
+			return service.getFunctionTriggers(functionName, marker);
+		},
+	});
+
+	// Create event source mapping (trigger)
+	app.post("/:functionName/event-source-mappings", {
+		schema: {
+			params: FunctionNameParamsSchema,
+			body: CreateEventSourceMappingBodySchema,
+			response: {
+				201: CreateEventSourceMappingResponseSchema,
+				400: ErrorResponseSchema,
+				409: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new LambdaService(clients.lambda);
+			const { functionName } = request.params as { functionName: string };
+			const result = await service.createEventSourceMapping(
+				functionName,
+				request.body as {
+					eventSourceArn: string;
+					batchSize?: number;
+					maximumBatchingWindowInSeconds?: number;
+					startingPosition?: string;
+					enabled?: boolean;
+				},
+			);
+			return reply.status(201).send(result);
+		},
+	});
+
+	// Delete event source mapping (trigger)
+	app.delete("/event-source-mappings/:uuid", {
+		schema: {
+			params: EventSourceMappingParamsSchema,
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new LambdaService(clients.lambda);
+			const { uuid } = request.params as { uuid: string };
+			return service.deleteEventSourceMapping(uuid);
 		},
 	});
 }

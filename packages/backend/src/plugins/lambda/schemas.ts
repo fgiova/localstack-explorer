@@ -142,8 +142,60 @@ export const ListAliasesResponseSchema = Type.Object({
 	nextMarker: Type.Optional(Type.String()),
 });
 
+export const EventSourceMappingSchema = Type.Object({
+	uuid: Type.String(),
+	eventSourceArn: Type.Optional(Type.String()),
+	functionArn: Type.Optional(Type.String()),
+	state: Type.Optional(Type.String()),
+	batchSize: Type.Optional(Type.Number()),
+	lastModified: Type.Optional(Type.String()),
+	maximumBatchingWindowInSeconds: Type.Optional(Type.Number()),
+	startingPosition: Type.Optional(Type.String()),
+	enabled: Type.Optional(Type.Boolean()),
+});
+export type EventSourceMapping = Static<typeof EventSourceMappingSchema>;
+
+export const ListEventSourceMappingsResponseSchema = Type.Object({
+	eventSourceMappings: Type.Array(EventSourceMappingSchema),
+	nextMarker: Type.Optional(Type.String()),
+});
+
+export const PolicyTriggerSchema = Type.Object({
+	sid: Type.String(),
+	service: Type.String(),
+	sourceArn: Type.Optional(Type.String()),
+});
+
+export const FunctionTriggersResponseSchema = Type.Object({
+	eventSourceMappings: Type.Array(EventSourceMappingSchema),
+	policyTriggers: Type.Array(PolicyTriggerSchema),
+	nextMarker: Type.Optional(Type.String()),
+});
+
+export const CreateEventSourceMappingBodySchema = Type.Object({
+	eventSourceArn: Type.String({ minLength: 1 }),
+	batchSize: Type.Optional(Type.Integer({ minimum: 1, maximum: 10000 })),
+	maximumBatchingWindowInSeconds: Type.Optional(
+		Type.Integer({ minimum: 0, maximum: 300 }),
+	),
+	startingPosition: Type.Optional(Type.String()),
+	enabled: Type.Optional(Type.Boolean()),
+});
+export type CreateEventSourceMappingBody = Static<
+	typeof CreateEventSourceMappingBodySchema
+>;
+
+export const EventSourceMappingParamsSchema = Type.Object({
+	uuid: Type.String(),
+});
+
 export const MessageResponseSchema = Type.Object({
 	message: Type.String(),
+});
+
+export const CreateEventSourceMappingResponseSchema = Type.Object({
+	message: Type.String(),
+	uuid: Type.String(),
 });
 
 export const DeleteResponseSchema = Type.Object({

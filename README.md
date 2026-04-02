@@ -12,7 +12,7 @@ LocalStack Explorer provides an AWS Console-like experience for your local devel
 | SQS            | Fully implemented | Queue management, message operations, queue attributes, purge     |
 | SNS            | Fully implemented | Topics, subscriptions, publish, tags, filter policies              |
 | IAM            | Fully implemented | Users, groups, managed/inline policies, access keys, versioning   |
-| Lambda         | Fully implemented | Functions CRUD, invoke, code/config update, versions, aliases     |
+| Lambda         | Fully implemented | Functions CRUD, invoke, triggers, code/config update, versions, aliases |
 | CloudFormation | Fully implemented | Stack CRUD, update, template editor, events, cross-service links  |
 | DynamoDB       | Fully implemented | Table management, create, list, detail views                      |
 
@@ -226,7 +226,7 @@ localstack-explorer/
 - **[SQS Service Guide](docs/sqs.md)** — Complete reference for SQS operations: queue management, message send/receive/delete, queue attributes, and purge.
 - **[SNS Service Guide](docs/sns.md)** — Complete reference for SNS operations: topics, subscriptions, publish (single/batch), filter policies, and tags.
 - **[IAM Service Guide](docs/iam.md)** — Complete reference for IAM operations: users, groups, managed/inline policies, access keys, policy versioning, and cascading deletes.
-- **[Lambda Service Guide](docs/lambda.md)** — Complete reference for Lambda operations: functions CRUD, invoke with log output, code/config updates, versions, and aliases.
+- **[Lambda Service Guide](docs/lambda.md)** — Complete reference for Lambda operations: functions CRUD, invoke with log output, triggers (S3, SQS, SNS, etc.), code/config updates, versions, and aliases.
 - **[CloudFormation Service Guide](docs/cloudformation.md)** — Complete reference for CloudFormation operations: stack CRUD, update, template editor, events timeline, and cross-service resource navigation.
 - **[DynamoDB Service Guide](docs/dynamodb.md)** — Complete reference for DynamoDB operations: table management, creation, listing, and detail views.
 - **[Adding New Services](docs/adding-new-services.md)** — Step-by-step guide to implement a new AWS service following the established plugin pattern.

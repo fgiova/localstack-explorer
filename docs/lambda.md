@@ -1,6 +1,6 @@
 # Lambda Service Guide
 
-Lambda is a fully implemented service in LocalStack Explorer. It supports function management, code and configuration updates, synchronous invocation with log output, and browsing of versions and aliases.
+Lambda is a fully implemented service in LocalStack Explorer. It supports function management, code and configuration updates, synchronous invocation with log output, triggers, versions, and aliases.
 
 ## Features
 
@@ -10,6 +10,9 @@ Lambda is a fully implemented service in LocalStack Explorer. It supports functi
 - Update function configuration (handler, runtime, memory, timeout, environment, role)
 - Invoke functions synchronously with JSON payload
 - View invocation results: status code, response payload, function errors, and decoded CloudWatch logs
+- **Triggers**: view all trigger sources for a function
+  - **Resource-based policy triggers** (S3, SNS, API Gateway, EventBridge, etc.) — detected from the function's resource policy via `GetPolicy`
+  - **Event source mappings** (SQS, DynamoDB Streams, Kinesis, etc.) — with create and delete support
 - Browse function versions
 - Browse function aliases
 - Search/filter functions by name
@@ -35,6 +38,18 @@ All endpoints are prefixed with `/api/lambda`.
 | Method | Path                          | Description              | Request                        | Response                       |
 |--------|-------------------------------|--------------------------|--------------------------------|--------------------------------|
 | POST   | `/:functionName/invoke`       | Invoke function          | `{ payload?, invocationType? }` | `InvokeFunctionResponse`      |
+
+### Triggers
+
+| Method | Path                                       | Description                    | Request                                          | Response                                  |
+|--------|--------------------------------------------|--------------------------------|--------------------------------------------------|-------------------------------------------|
+| GET    | `/:functionName/triggers`                  | List all triggers              | `?marker=string`                                 | `{ eventSourceMappings, policyTriggers }` |
+| POST   | `/:functionName/event-source-mappings`     | Create event source mapping    | `{ eventSourceArn, batchSize?, enabled?, ... }`  | `{ message, uuid }`                      |
+| DELETE | `/event-source-mappings/:uuid`             | Delete event source mapping    | --                                               | `{ success: boolean }`                   |
+
+The `GET /:functionName/triggers` endpoint combines two data sources:
+- **Event source mappings** — Lambda's `ListEventSourceMappings` (SQS queues, DynamoDB Streams, Kinesis streams)
+- **Policy triggers** — parsed from the function's resource-based policy via `GetPolicy` (S3 bucket notifications, SNS topics, API Gateway, EventBridge rules, etc.)
 
 ### Versions & Aliases
 
@@ -134,6 +149,48 @@ curl http://localhost:3001/api/lambda/my-function
 }
 ```
 
+**List triggers:**
+
+```bash
+curl http://localhost:3001/api/lambda/my-function/triggers
+```
+
+```json
+{
+  "eventSourceMappings": [
+    {
+      "uuid": "abc-123",
+      "eventSourceArn": "arn:aws:sqs:us-east-1:000000000000:my-queue",
+      "state": "Enabled",
+      "batchSize": 10
+    }
+  ],
+  "policyTriggers": [
+    {
+      "sid": "AllowS3Invoke",
+      "service": "s3.amazonaws.com",
+      "sourceArn": "arn:aws:s3:::my-bucket"
+    }
+  ]
+}
+```
+
+**Create event source mapping:**
+
+```bash
+curl -X POST http://localhost:3001/api/lambda/my-function/event-source-mappings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventSourceArn": "arn:aws:sqs:us-east-1:000000000000:my-queue",
+    "batchSize": 10,
+    "enabled": true
+  }'
+```
+
+```json
+{ "message": "Event source mapping created successfully", "uuid": "abc-123" }
+```
+
 **Delete function:**
 
 ```bash
@@ -150,6 +207,7 @@ curl -X DELETE http://localhost:3001/api/lambda/my-function
 |---------------------------------|-------------|----------------------|
 | Function not found              | 404         | `FUNCTION_NOT_FOUND` |
 | Function already exists / in use | 409        | `FUNCTION_CONFLICT`  |
+| Event source mapping not found  | 404         | `EVENT_SOURCE_MAPPING_NOT_FOUND` |
 | Invalid parameter value         | 400         | `INVALID_PARAMETER`  |
 | Rate limit exceeded             | 429         | `TOO_MANY_REQUESTS`  |
 | AWS service error               | 502         | `SERVICE_ERROR`      |
@@ -165,12 +223,15 @@ curl -X DELETE http://localhost:3001/api/lambda/my-function
 
 ### Function Detail (`/lambda/:functionName`)
 
-Four tabs:
+Five tabs:
 
 1. **Configuration** — attribute grid (runtime, handler, role, memory, timeout, code size, state, package type, architectures, SHA256) and environment variables table
 2. **Invoke** — JSON payload textarea, invocation type selector (RequestResponse, Event, DryRun), result panel with status code, payload, error, and decoded log output
-3. **Versions** — table of published versions with version number, ARN, runtime, and last modified date
-4. **Aliases** — table of aliases with name, ARN, function version, and description
+3. **Triggers** — two sections:
+   - **Resource-Based Policy Triggers** — read-only table showing services (S3, SNS, API Gateway, etc.) authorized to invoke the function, with source ARN and policy statement ID. Detected automatically from the function's resource-based policy.
+   - **Event Source Mappings** — table of SQS/DynamoDB Streams/Kinesis mappings with state, batch size, and last modified. Supports creating new mappings (event source ARN + batch size) and deleting existing ones with confirmation dialog.
+4. **Versions** — table of published versions with version number, ARN, runtime, and last modified date
+5. **Aliases** — table of aliases with name, ARN, function version, and description
 
 ## Backend Architecture
 
@@ -179,7 +240,7 @@ The Lambda plugin follows the standard service plugin pattern:
 ```
 packages/backend/src/plugins/lambda/
 ├── index.ts       # Plugin registration (5 lines)
-├── routes.ts      # 9 Fastify routes
+├── routes.ts      # 12 Fastify routes
 ├── service.ts     # LambdaService class wrapping @aws-sdk/client-lambda
 └── schemas.ts     # TypeBox request/response schemas
 ```

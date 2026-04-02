@@ -22,6 +22,9 @@ interface MockLambdaService {
 	invokeFunction: Mock;
 	listVersions: Mock;
 	listAliases: Mock;
+	getFunctionTriggers: Mock;
+	createEventSourceMapping: Mock;
+	deleteEventSourceMapping: Mock;
 }
 
 function createMockLambdaService(): MockLambdaService {
@@ -65,6 +68,9 @@ function createMockLambdaService(): MockLambdaService {
 		}),
 		listVersions: vi.fn().mockResolvedValue({ versions: [], nextMarker: undefined }),
 		listAliases: vi.fn().mockResolvedValue({ aliases: [], nextMarker: undefined }),
+		getFunctionTriggers: vi.fn().mockResolvedValue({ eventSourceMappings: [], policyTriggers: [], nextMarker: undefined }),
+		createEventSourceMapping: vi.fn().mockResolvedValue({ message: "Event source mapping created successfully", uuid: "new-uuid" }),
+		deleteEventSourceMapping: vi.fn().mockResolvedValue({ success: true }),
 	};
 }
 
@@ -492,6 +498,124 @@ describe("Lambda Routes", () => {
 			expect(mockService.listAliases).toHaveBeenCalledWith(
 				"my-function",
 				"next-page-token",
+			);
+		});
+	});
+
+	// ── Get Function Triggers ────────────────────────────────────────────────
+
+	describe("GET /:functionName/triggers", () => {
+		it("should return combined triggers (event source mappings + policy triggers)", async () => {
+			const response = await app.inject({
+				method: "GET",
+				url: "/my-function/triggers",
+			});
+			expect(response.statusCode).toBe(200);
+			const body = response.json<{
+				eventSourceMappings: unknown[];
+				policyTriggers: unknown[];
+				nextMarker: string | undefined;
+			}>();
+			expect(body.eventSourceMappings).toEqual([]);
+			expect(body.policyTriggers).toEqual([]);
+			expect(mockService.getFunctionTriggers).toHaveBeenCalledWith(
+				"my-function",
+				undefined,
+			);
+		});
+
+		it("should pass marker query param", async () => {
+			mockService.getFunctionTriggers.mockClear();
+			const response = await app.inject({
+				method: "GET",
+				url: "/my-function/triggers?marker=next-page-token",
+			});
+			expect(response.statusCode).toBe(200);
+			expect(mockService.getFunctionTriggers).toHaveBeenCalledWith(
+				"my-function",
+				"next-page-token",
+			);
+		});
+	});
+
+	// ── Create Event Source Mapping ──────────────────────────────────────────
+
+	describe("POST /:functionName/event-source-mappings", () => {
+		it("should create event source mapping and return 201", async () => {
+			const response = await app.inject({
+				method: "POST",
+				url: "/my-function/event-source-mappings",
+				payload: {
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				},
+			});
+			expect(response.statusCode).toBe(201);
+			const body = response.json<{ message: string; uuid: string }>();
+			expect(body.message).toBe("Event source mapping created successfully");
+			expect(body.uuid).toBe("new-uuid");
+			expect(mockService.createEventSourceMapping).toHaveBeenCalledWith(
+				"my-function",
+				expect.objectContaining({
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+				}),
+			);
+		});
+
+		it("should forward optional params (batchSize, startingPosition, enabled)", async () => {
+			mockService.createEventSourceMapping.mockClear();
+			const response = await app.inject({
+				method: "POST",
+				url: "/my-function/event-source-mappings",
+				payload: {
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+					batchSize: 10,
+					startingPosition: "TRIM_HORIZON",
+					enabled: false,
+				},
+			});
+			expect(response.statusCode).toBe(201);
+			expect(mockService.createEventSourceMapping).toHaveBeenCalledWith(
+				"my-function",
+				expect.objectContaining({
+					eventSourceArn: "arn:aws:sqs:us-east-1:000000000000:my-queue",
+					batchSize: 10,
+					startingPosition: "TRIM_HORIZON",
+					enabled: false,
+				}),
+			);
+		});
+
+		it("should return 400 when eventSourceArn is missing", async () => {
+			const response = await app.inject({
+				method: "POST",
+				url: "/my-function/event-source-mappings",
+				payload: { batchSize: 10 },
+			});
+			expect(response.statusCode).toBe(400);
+		});
+	});
+
+	// ── Delete Event Source Mapping ──────────────────────────────────────────
+
+	describe("DELETE /event-source-mappings/:uuid", () => {
+		it("should delete event source mapping", async () => {
+			const response = await app.inject({
+				method: "DELETE",
+				url: "/event-source-mappings/test-uuid-1234",
+			});
+			expect(response.statusCode).toBe(200);
+			const body = response.json<{ success: boolean }>();
+			expect(body.success).toBe(true);
+		});
+
+		it("should call deleteEventSourceMapping with the uuid param", async () => {
+			mockService.deleteEventSourceMapping.mockClear();
+			await app.inject({
+				method: "DELETE",
+				url: "/event-source-mappings/test-uuid-1234",
+			});
+			expect(mockService.deleteEventSourceMapping).toHaveBeenCalledWith(
+				"test-uuid-1234",
 			);
 		});
 	});

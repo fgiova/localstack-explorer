@@ -2,7 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
+	useCreateEventSourceMapping,
+	useDeleteEventSourceMapping,
 	useDeleteFunction,
+	useFunctionTriggers,
 	useGetFunction,
 	useListAliases,
 	useListVersions,
@@ -28,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { InvokeFunctionForm } from "./InvokeFunctionForm";
 
-type TabId = "configuration" | "invoke" | "versions" | "aliases";
+type TabId = "configuration" | "invoke" | "triggers" | "versions" | "aliases";
 
 interface AttributeItemProps {
 	label: string;
@@ -166,6 +169,305 @@ function AliasesTab({ functionName }: { functionName: string }) {
 	);
 }
 
+function formatServiceName(service: string): string {
+	const map: Record<string, string> = {
+		"s3.amazonaws.com": "S3",
+		"sns.amazonaws.com": "SNS",
+		"events.amazonaws.com": "EventBridge",
+		"logs.amazonaws.com": "CloudWatch Logs",
+		"cognito-idp.amazonaws.com": "Cognito",
+		"apigateway.amazonaws.com": "API Gateway",
+		"iot.amazonaws.com": "IoT",
+	};
+	return map[service] ?? service;
+}
+
+function extractResourceName(arn?: string): string {
+	if (!arn) return "—";
+	const parts = arn.split(":");
+	// S3 ARNs are like arn:aws:s3:::bucket-name
+	if (parts[2] === "s3") return parts.slice(5).join(":").replace(/^:*/, "");
+	return parts.slice(5).join(":") || arn;
+}
+
+function TriggersTab({ functionName }: { functionName: string }) {
+	const { data, isLoading, error } = useFunctionTriggers(functionName);
+	const deleteTrigger = useDeleteEventSourceMapping();
+	const createTrigger = useCreateEventSourceMapping();
+	const [showCreate, setShowCreate] = useState(false);
+	const [eventSourceArn, setEventSourceArn] = useState("");
+	const [batchSize, setBatchSize] = useState("10");
+	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center py-12">
+				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="rounded-md border border-destructive p-4 text-destructive">
+				Error loading triggers: {error.message}
+			</div>
+		);
+	}
+
+	const mappings = data?.eventSourceMappings ?? [];
+	const policyTriggers = data?.policyTriggers ?? [];
+	const hasTriggers = mappings.length > 0 || policyTriggers.length > 0;
+
+	const handleCreate = () => {
+		if (!eventSourceArn.trim()) return;
+		createTrigger.mutate(
+			{
+				functionName,
+				eventSourceArn: eventSourceArn.trim(),
+				batchSize: Number(batchSize) || 10,
+				enabled: true,
+			},
+			{
+				onSuccess: () => {
+					setEventSourceArn("");
+					setBatchSize("10");
+					setShowCreate(false);
+				},
+			},
+		);
+	};
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<p className="text-sm text-muted-foreground">
+					Event sources and services that trigger this function.
+				</p>
+				<Button size="sm" onClick={() => setShowCreate(!showCreate)}>
+					{showCreate ? "Cancel" : "Add Event Source Mapping"}
+				</Button>
+			</div>
+
+			{showCreate && (
+				<Card>
+					<CardContent className="space-y-3 pt-4">
+						<div className="space-y-1">
+							<label
+								htmlFor="eventSourceArn"
+								className="text-sm font-medium"
+							>
+								Event Source ARN
+							</label>
+							<input
+								id="eventSourceArn"
+								type="text"
+								className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+								placeholder="arn:aws:sqs:us-east-1:000000000000:my-queue"
+								value={eventSourceArn}
+								onChange={(e) => setEventSourceArn(e.target.value)}
+							/>
+						</div>
+						<div className="space-y-1">
+							<label htmlFor="batchSize" className="text-sm font-medium">
+								Batch Size
+							</label>
+							<input
+								id="batchSize"
+								type="number"
+								className="flex h-9 w-24 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+								value={batchSize}
+								onChange={(e) => setBatchSize(e.target.value)}
+								min={1}
+								max={10000}
+							/>
+						</div>
+						{createTrigger.isError && (
+							<p className="text-sm text-destructive">
+								{createTrigger.error.message}
+							</p>
+						)}
+						<Button
+							size="sm"
+							onClick={handleCreate}
+							disabled={
+								!eventSourceArn.trim() || createTrigger.isPending
+							}
+						>
+							{createTrigger.isPending ? "Creating..." : "Create"}
+						</Button>
+					</CardContent>
+				</Card>
+			)}
+
+			{!hasTriggers ? (
+				<div className="py-12 text-center text-muted-foreground">
+					No triggers configured for this function.
+				</div>
+			) : (
+				<div className="space-y-6">
+					{/* Resource-based policy triggers (S3, SNS, API Gateway, etc.) */}
+					{policyTriggers.length > 0 && (
+						<div className="space-y-2">
+							<h4 className="text-sm font-medium">
+								Resource-Based Policy Triggers
+							</h4>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Service</TableHead>
+										<TableHead>Source</TableHead>
+										<TableHead>Policy Statement</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{policyTriggers.map((t) => (
+										<TableRow key={t.sid}>
+											<TableCell>
+												<Badge>{formatServiceName(t.service)}</Badge>
+											</TableCell>
+											<TableCell>
+												<span className="font-medium">
+													{extractResourceName(t.sourceArn)}
+												</span>
+												{t.sourceArn && (
+													<div className="text-xs text-muted-foreground font-mono">
+														{t.sourceArn}
+													</div>
+												)}
+											</TableCell>
+											<TableCell className="text-xs text-muted-foreground font-mono">
+												{t.sid}
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</div>
+					)}
+
+					{/* Event Source Mappings (SQS, DynamoDB Streams, Kinesis, etc.) */}
+					{mappings.length > 0 && (
+						<div className="space-y-2">
+							<h4 className="text-sm font-medium">
+								Event Source Mappings
+							</h4>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Event Source</TableHead>
+										<TableHead>State</TableHead>
+										<TableHead>Batch Size</TableHead>
+										<TableHead>Last Modified</TableHead>
+										<TableHead className="w-[80px]" />
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{mappings.map((m) => {
+										const arnParts =
+											m.eventSourceArn?.split(":") ?? [];
+										const service = arnParts[2] ?? "unknown";
+										const resource =
+											arnParts.slice(5).join(":") ||
+											m.eventSourceArn;
+										return (
+											<TableRow key={m.uuid}>
+												<TableCell>
+													<div>
+														<span className="font-medium">
+															{resource}
+														</span>
+														<span className="ml-2 text-xs text-muted-foreground">
+															({service})
+														</span>
+													</div>
+													<div className="text-xs text-muted-foreground font-mono">
+														{m.uuid}
+													</div>
+												</TableCell>
+												<TableCell>
+													<Badge
+														variant={
+															m.state === "Enabled"
+																? "default"
+																: "secondary"
+														}
+													>
+														{m.state ?? "Unknown"}
+													</Badge>
+												</TableCell>
+												<TableCell>
+													{m.batchSize ?? "—"}
+												</TableCell>
+												<TableCell className="text-sm text-muted-foreground">
+													{m.lastModified
+														? new Date(
+																m.lastModified,
+															).toLocaleString()
+														: "—"}
+												</TableCell>
+												<TableCell>
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() =>
+															setDeleteTarget(m.uuid)
+														}
+													>
+														<Trash2 className="h-4 w-4 text-destructive" />
+													</Button>
+												</TableCell>
+											</TableRow>
+										);
+									})}
+								</TableBody>
+							</Table>
+						</div>
+					)}
+				</div>
+			)}
+
+			<Dialog
+				open={!!deleteTarget}
+				onOpenChange={() => setDeleteTarget(null)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete Event Source Mapping</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete this event source mapping?
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setDeleteTarget(null)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={() => {
+								if (deleteTarget) {
+									deleteTrigger.mutate(
+										{ uuid: deleteTarget, functionName },
+										{
+											onSettled: () => setDeleteTarget(null),
+										},
+									);
+								}
+							}}
+							disabled={deleteTrigger.isPending}
+						>
+							{deleteTrigger.isPending ? "Deleting..." : "Delete"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
+}
+
 export function FunctionDetail({ functionName }: FunctionDetailProps) {
 	const [activeTab, setActiveTab] = useState<TabId>("configuration");
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -182,6 +484,7 @@ export function FunctionDetail({ functionName }: FunctionDetailProps) {
 	const tabs: { id: TabId; label: string }[] = [
 		{ id: "configuration", label: "Configuration" },
 		{ id: "invoke", label: "Invoke" },
+		{ id: "triggers", label: "Triggers" },
 		{ id: "versions", label: "Versions" },
 		{ id: "aliases", label: "Aliases" },
 	];
@@ -351,6 +654,18 @@ export function FunctionDetail({ functionName }: FunctionDetailProps) {
 							</CardHeader>
 							<CardContent>
 								<InvokeFunctionForm functionName={functionName} />
+							</CardContent>
+						</Card>
+					)}
+
+					{/* Tab: Triggers */}
+					{activeTab === "triggers" && (
+						<Card>
+							<CardHeader>
+								<CardTitle>Triggers</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<TriggersTab functionName={functionName} />
 							</CardContent>
 						</Card>
 					)}
