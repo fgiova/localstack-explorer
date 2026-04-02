@@ -1,4 +1,4 @@
-import { cpSync, readdirSync } from "node:fs";
+import { cpSync } from "node:fs";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";

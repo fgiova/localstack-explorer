@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AppError } from "../../../src/shared/errors.js";
 import { CloudFormationService } from "../../../src/plugins/cloudformation/service.js";
+import { AppError } from "../../../src/shared/errors.js";
 
 const mockSend = vi.fn();
 
@@ -31,7 +31,8 @@ describe("CloudFormationService", () => {
 			mockSend.mockResolvedValueOnce({
 				StackSummaries: [
 					{
-						StackId: "arn:aws:cloudformation:us-east-1:000000000000:stack/my-stack/abc",
+						StackId:
+							"arn:aws:cloudformation:us-east-1:000000000000:stack/my-stack/abc",
 						StackName: "my-stack",
 						StackStatus: "CREATE_COMPLETE",
 						CreationTime: creationTime,
@@ -39,7 +40,8 @@ describe("CloudFormationService", () => {
 						TemplateDescription: "My test stack",
 					},
 					{
-						StackId: "arn:aws:cloudformation:us-east-1:000000000000:stack/other/def",
+						StackId:
+							"arn:aws:cloudformation:us-east-1:000000000000:stack/other/def",
 						StackName: "other-stack",
 						StackStatus: "UPDATE_COMPLETE",
 						CreationTime: creationTime,

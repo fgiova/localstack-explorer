@@ -65,7 +65,11 @@ describe("S3Service", () => {
 
 		it("uses empty string for bucket name when Name is undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Buckets: [{ /* Name intentionally absent */ }],
+				Buckets: [
+					{
+						/* Name intentionally absent */
+					},
+				],
 			});
 
 			const result = await service.listBuckets();
@@ -143,13 +147,13 @@ describe("S3Service", () => {
 			await expect(service.deleteBucket("missing-bucket")).rejects.toThrow(
 				AppError,
 			);
-			await expect(service.deleteBucket("missing-bucket")).rejects.toMatchObject(
-				{
-					statusCode: 404,
-					code: "BUCKET_NOT_FOUND",
-					message: "Bucket 'missing-bucket' not found",
-				},
-			);
+			await expect(
+				service.deleteBucket("missing-bucket"),
+			).rejects.toMatchObject({
+				statusCode: 404,
+				code: "BUCKET_NOT_FOUND",
+				message: "Bucket 'missing-bucket' not found",
+			});
 		});
 
 		it("throws AppError with 409 when BucketNotEmpty", async () => {
@@ -233,7 +237,11 @@ describe("S3Service", () => {
 		it("uses empty string for prefix when CommonPrefixes entry has no Prefix", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				Contents: [],
-				CommonPrefixes: [{ /* Prefix intentionally absent */ }],
+				CommonPrefixes: [
+					{
+						/* Prefix intentionally absent */
+					},
+				],
 				IsTruncated: false,
 			});
 
@@ -243,7 +251,11 @@ describe("S3Service", () => {
 
 		it("uses empty string for object key when Key is undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Contents: [{ /* Key intentionally absent */ }],
+				Contents: [
+					{
+						/* Key intentionally absent */
+					},
+				],
 				IsTruncated: false,
 			});
 
@@ -259,11 +271,13 @@ describe("S3Service", () => {
 			await expect(service.listObjects("missing-bucket")).rejects.toThrow(
 				AppError,
 			);
-			await expect(service.listObjects("missing-bucket")).rejects.toMatchObject({
-				statusCode: 404,
-				code: "BUCKET_NOT_FOUND",
-				message: "Bucket 'missing-bucket' not found",
-			});
+			await expect(service.listObjects("missing-bucket")).rejects.toMatchObject(
+				{
+					statusCode: 404,
+					code: "BUCKET_NOT_FOUND",
+					message: "Bucket 'missing-bucket' not found",
+				},
+			);
 		});
 
 		it("re-throws unknown errors from listObjects", async () => {
@@ -433,7 +447,8 @@ describe("S3Service", () => {
 			const body = Buffer.from("binary data");
 			await service.uploadObject("my-bucket", "data.bin", body);
 
-			const putCall = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			const putCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[0][0];
 			expect(putCall.input).toMatchObject({
 				Bucket: "my-bucket",
 				Key: "data.bin",
@@ -480,7 +495,9 @@ describe("S3Service", () => {
 			expect(getSignedUrl).toHaveBeenCalledOnce();
 			expect(getSignedUrl).toHaveBeenCalledWith(
 				client,
-				expect.objectContaining({ input: { Bucket: "my-bucket", Key: "file.txt" } }),
+				expect.objectContaining({
+					input: { Bucket: "my-bucket", Key: "file.txt" },
+				}),
 				{ expiresIn: 3600 },
 			);
 		});
@@ -492,11 +509,9 @@ describe("S3Service", () => {
 
 			await service.getPresignedUrl("my-bucket", "file.txt");
 
-			expect(getSignedUrl).toHaveBeenCalledWith(
-				client,
-				expect.anything(),
-				{ expiresIn: 3600 },
-			);
+			expect(getSignedUrl).toHaveBeenCalledWith(client, expect.anything(), {
+				expiresIn: 3600,
+			});
 		});
 
 		it("passes custom expiresIn to getSignedUrl", async () => {
@@ -506,11 +521,9 @@ describe("S3Service", () => {
 
 			await service.getPresignedUrl("my-bucket", "file.txt", 7200);
 
-			expect(getSignedUrl).toHaveBeenCalledWith(
-				client,
-				expect.anything(),
-				{ expiresIn: 7200 },
-			);
+			expect(getSignedUrl).toHaveBeenCalledWith(client, expect.anything(), {
+				expiresIn: 7200,
+			});
 		});
 	});
 });

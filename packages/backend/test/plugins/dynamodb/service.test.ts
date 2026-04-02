@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { DynamoDBStreamsClient } from "@aws-sdk/client-dynamodb-streams";
-import { AppError } from "../../../src/shared/errors.js";
+import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { describe, expect, it, vi } from "vitest";
 import { DynamoDBService } from "../../../src/plugins/dynamodb/service.js";
+import { AppError } from "../../../src/shared/errors.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -181,7 +181,9 @@ describe("listTables", () => {
 			namedError("ResourceNotFoundException"),
 		);
 
-		await expect(service.listTables()).rejects.toMatchObject({ statusCode: 404 });
+		await expect(service.listTables()).rejects.toMatchObject({
+			statusCode: 404,
+		});
 	});
 });
 
@@ -203,7 +205,8 @@ describe("describeTable", () => {
 				CreationDateTime: now,
 				ItemCount: 5,
 				TableSizeBytes: 512,
-				LatestStreamArn: "arn:aws:dynamodb:us-east-1:000000000000:table/my-table/stream/ts",
+				LatestStreamArn:
+					"arn:aws:dynamodb:us-east-1:000000000000:table/my-table/stream/ts",
 				KeySchema: [{ AttributeName: "pk", KeyType: "HASH" }],
 				AttributeDefinitions: [{ AttributeName: "pk", AttributeType: "S" }],
 				ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 },
@@ -212,7 +215,10 @@ describe("describeTable", () => {
 						IndexName: "gsi-1",
 						KeySchema: [{ AttributeName: "sk", KeyType: "RANGE" }],
 						Projection: { ProjectionType: "ALL", NonKeyAttributes: ["attr1"] },
-						ProvisionedThroughput: { ReadCapacityUnits: 2, WriteCapacityUnits: 2 },
+						ProvisionedThroughput: {
+							ReadCapacityUnits: 2,
+							WriteCapacityUnits: 2,
+						},
 						IndexStatus: "ACTIVE",
 						ItemCount: 3,
 					},
@@ -240,7 +246,8 @@ describe("describeTable", () => {
 			creationDateTime: now.toISOString(),
 			itemCount: 5,
 			tableSizeBytes: 512,
-			latestStreamArn: "arn:aws:dynamodb:us-east-1:000000000000:table/my-table/stream/ts",
+			latestStreamArn:
+				"arn:aws:dynamodb:us-east-1:000000000000:table/my-table/stream/ts",
 			keySchema: [{ attributeName: "pk", keyType: "HASH" }],
 			attributeDefinitions: [{ attributeName: "pk", attributeType: "S" }],
 			provisionedThroughput: { readCapacityUnits: 5, writeCapacityUnits: 5 },
@@ -249,7 +256,10 @@ describe("describeTable", () => {
 					indexName: "gsi-1",
 					keySchema: [{ attributeName: "sk", keyType: "RANGE" }],
 					projection: { projectionType: "ALL", nonKeyAttributes: ["attr1"] },
-					provisionedThroughput: { readCapacityUnits: 2, writeCapacityUnits: 2 },
+					provisionedThroughput: {
+						readCapacityUnits: 2,
+						writeCapacityUnits: 2,
+					},
 					indexStatus: "ACTIVE",
 					itemCount: 3,
 				},
@@ -329,7 +339,9 @@ describe("describeTable", () => {
 		});
 
 		const result = await service.describeTable("my-table");
-		expect(result?.globalSecondaryIndexes?.[0].provisionedThroughput).toBeUndefined();
+		expect(
+			result?.globalSecondaryIndexes?.[0].provisionedThroughput,
+		).toBeUndefined();
 	});
 
 	it("uses 'ALL' as projectionType fallback when Projection is undefined on GSI", async () => {
@@ -354,9 +366,9 @@ describe("describeTable", () => {
 		});
 
 		const result = await service.describeTable("my-table");
-		expect(
-			result?.globalSecondaryIndexes?.[0].projection.projectionType,
-		).toBe("ALL");
+		expect(result?.globalSecondaryIndexes?.[0].projection.projectionType).toBe(
+			"ALL",
+		);
 	});
 });
 
@@ -418,7 +430,10 @@ describe("createTable", () => {
 					indexName: "gsi-1",
 					keySchema: [{ attributeName: "sk", keyType: "HASH" }],
 					projection: { projectionType: "ALL" },
-					provisionedThroughput: { readCapacityUnits: 3, writeCapacityUnits: 3 },
+					provisionedThroughput: {
+						readCapacityUnits: 3,
+						writeCapacityUnits: 3,
+					},
 				},
 			],
 		});
@@ -448,9 +463,9 @@ describe("createTable", () => {
 		});
 
 		const callArg = sendMock.mock.calls[0][0];
-		expect(callArg.input.GlobalSecondaryIndexes[0].ProvisionedThroughput).toEqual(
-			{ ReadCapacityUnits: 5, WriteCapacityUnits: 5 },
-		);
+		expect(
+			callArg.input.GlobalSecondaryIndexes[0].ProvisionedThroughput,
+		).toEqual({ ReadCapacityUnits: 5, WriteCapacityUnits: 5 });
 	});
 
 	it("creates a table with LSIs", async () => {
@@ -909,12 +924,18 @@ describe("batchGetItems", () => {
 		const sendMock = docClient.send as ReturnType<typeof vi.fn>;
 		// First batch of 100
 		sendMock.mockResolvedValueOnce({
-			Responses: { "my-table": Array.from({ length: 100 }, (_, i) => ({ pk: String(i) })) },
+			Responses: {
+				"my-table": Array.from({ length: 100 }, (_, i) => ({ pk: String(i) })),
+			},
 			UnprocessedKeys: {},
 		});
 		// Second batch of 10
 		sendMock.mockResolvedValueOnce({
-			Responses: { "my-table": Array.from({ length: 10 }, (_, i) => ({ pk: String(100 + i) })) },
+			Responses: {
+				"my-table": Array.from({ length: 10 }, (_, i) => ({
+					pk: String(100 + i),
+				})),
+			},
 			UnprocessedKeys: {},
 		});
 
@@ -1038,9 +1059,9 @@ describe("deleteGSI", () => {
 			namedError("ResourceNotFoundException"),
 		);
 
-		await expect(service.deleteGSI("my-table", "old-gsi")).rejects.toMatchObject(
-			{ statusCode: 404, code: "TABLE_NOT_FOUND" },
-		);
+		await expect(
+			service.deleteGSI("my-table", "old-gsi"),
+		).rejects.toMatchObject({ statusCode: 404, code: "TABLE_NOT_FOUND" });
 	});
 });
 
@@ -1289,7 +1310,9 @@ describe("getStreamRecords", () => {
 		const streamsSendMock = streamsClient.send as ReturnType<typeof vi.fn>;
 		streamsSendMock.mockResolvedValueOnce({ ShardIterator: "iter-abc" });
 		streamsSendMock.mockResolvedValueOnce({
-			Records: [{ eventID: "evt-nodb", eventName: "INSERT", dynamodb: undefined }],
+			Records: [
+				{ eventID: "evt-nodb", eventName: "INSERT", dynamodb: undefined },
+			],
 			NextShardIterator: undefined,
 		});
 

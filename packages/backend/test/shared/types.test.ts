@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import Type from "typebox";
+import { describe, expect, it } from "vitest";
 import {
 	ErrorResponseSchema,
 	PaginatedResponseSchema,
@@ -76,7 +76,10 @@ describe("PaginatedResponseSchema", () => {
 			Type.Object({ bucket: Type.String() }),
 		);
 		const schema2 = PaginatedResponseSchema(
-			Type.Object({ queueUrl: Type.String(), approximateNumberOfMessages: Type.Number() }),
+			Type.Object({
+				queueUrl: Type.String(),
+				approximateNumberOfMessages: Type.Number(),
+			}),
 		);
 
 		// Each call should produce an independent schema

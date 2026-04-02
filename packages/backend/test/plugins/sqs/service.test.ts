@@ -303,7 +303,9 @@ describe("SQSService", () => {
 				unknownError,
 			);
 
-			await expect(service.getQueueUrl("my-queue")).rejects.toThrow("Throttled");
+			await expect(service.getQueueUrl("my-queue")).rejects.toThrow(
+				"Throttled",
+			);
 		});
 
 		it("returns empty string when QueueUrl is undefined in response", async () => {

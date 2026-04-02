@@ -484,7 +484,11 @@ describe("SNSService", () => {
 
 		it("uses empty strings for subscription fields when all are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Subscriptions: [{ /* all fields intentionally absent */ }],
+				Subscriptions: [
+					{
+						/* all fields intentionally absent */
+					},
+				],
 			});
 
 			const result = await service.listAllSubscriptions();
@@ -522,8 +526,7 @@ describe("SNSService", () => {
 							"arn:aws:sns:us-east-1:000000000000:my-topic:sub-001",
 						Owner: "000000000000",
 						Protocol: "sqs",
-						Endpoint:
-							"arn:aws:sqs:us-east-1:000000000000:my-queue",
+						Endpoint: "arn:aws:sqs:us-east-1:000000000000:my-queue",
 						TopicArn: topicArn,
 					},
 				],
@@ -590,9 +593,9 @@ describe("SNSService", () => {
 			const error = new Error("Unexpected error");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.listSubscriptionsByTopic(topicArn),
-			).rejects.toThrow("Unexpected error");
+			await expect(service.listSubscriptionsByTopic(topicArn)).rejects.toThrow(
+				"Unexpected error",
+			);
 		});
 	});
 
@@ -692,8 +695,11 @@ describe("SNSService", () => {
 
 			expect(client.send).toHaveBeenCalledTimes(3);
 
-			const rawCall = (client.send as ReturnType<typeof vi.fn>).mock.calls[1][0];
-			expect(rawCall.input).toMatchObject({ AttributeName: "RawMessageDelivery" });
+			const rawCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[1][0];
+			expect(rawCall.input).toMatchObject({
+				AttributeName: "RawMessageDelivery",
+			});
 
 			const filterCall = (client.send as ReturnType<typeof vi.fn>).mock
 				.calls[2][0];
@@ -804,9 +810,9 @@ describe("SNSService", () => {
 			const error = new Error("Unexpected error");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.deleteSubscription(subscriptionArn),
-			).rejects.toThrow("Unexpected error");
+			await expect(service.deleteSubscription(subscriptionArn)).rejects.toThrow(
+				"Unexpected error",
+			);
 		});
 	});
 
@@ -1027,8 +1033,7 @@ describe("SNSService", () => {
 					severity: { DataType: "String", StringValue: "high" },
 					count: { DataType: "Number", StringValue: "3" },
 				},
-				TargetArn:
-					"arn:aws:sns:us-east-1:000000000000:my-topic:endpoint-001",
+				TargetArn: "arn:aws:sns:us-east-1:000000000000:my-topic:endpoint-001",
 			});
 		});
 
@@ -1078,9 +1083,9 @@ describe("SNSService", () => {
 			const error = new Error("Unexpected error");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.publishMessage(topicArn, "Hello"),
-			).rejects.toThrow("Unexpected error");
+			await expect(service.publishMessage(topicArn, "Hello")).rejects.toThrow(
+				"Unexpected error",
+			);
 		});
 	});
 
@@ -1248,7 +1253,11 @@ describe("SNSService", () => {
 
 		it("uses empty strings for tag key and value when undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Tags: [{ /* Key and Value intentionally absent */ }],
+				Tags: [
+					{
+						/* Key and Value intentionally absent */
+					},
+				],
 			});
 
 			const result = await service.listTagsForResource(topicArn);
@@ -1260,12 +1269,12 @@ describe("SNSService", () => {
 			error.name = "NotFoundException";
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.listTagsForResource(topicArn),
-			).rejects.toMatchObject({
-				statusCode: 404,
-				code: "NOT_FOUND",
-			});
+			await expect(service.listTagsForResource(topicArn)).rejects.toMatchObject(
+				{
+					statusCode: 404,
+					code: "NOT_FOUND",
+				},
+			);
 		});
 
 		it("throws AppError 403 on authorization error", async () => {
@@ -1273,12 +1282,12 @@ describe("SNSService", () => {
 			error.name = "AuthorizationErrorException";
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.listTagsForResource(topicArn),
-			).rejects.toMatchObject({
-				statusCode: 403,
-				code: "AUTHORIZATION_ERROR",
-			});
+			await expect(service.listTagsForResource(topicArn)).rejects.toMatchObject(
+				{
+					statusCode: 403,
+					code: "AUTHORIZATION_ERROR",
+				},
+			);
 		});
 	});
 
@@ -1420,9 +1429,9 @@ describe("SNSService", () => {
 			const error = new Error("Unexpected error");
 			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-			await expect(
-				service.untagResource(topicArn, ["env"]),
-			).rejects.toThrow("Unexpected error");
+			await expect(service.untagResource(topicArn, ["env"])).rejects.toThrow(
+				"Unexpected error",
+			);
 		});
 	});
 });

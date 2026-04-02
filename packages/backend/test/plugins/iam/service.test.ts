@@ -148,7 +148,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when user fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Users: [{ /* all fields absent */ }],
+				Users: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listUsers();
 			expect(result.users[0]).toEqual({
@@ -189,7 +193,10 @@ describe("IAMService", () => {
 			await service.createUser("alice", "/division/");
 
 			const cmd = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
-			expect(cmd.input).toMatchObject({ UserName: "alice", Path: "/division/" });
+			expect(cmd.input).toMatchObject({
+				UserName: "alice",
+				Path: "/division/",
+			});
 		});
 
 		it("throws AppError 409 CONFLICT when entity already exists", async () => {
@@ -229,7 +236,9 @@ describe("IAMService", () => {
 
 		it("uses empty strings when user fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				User: { /* all fields absent */ },
+				User: {
+					/* all fields absent */
+				},
 			});
 			const result = await service.getUser("bob");
 			expect(result).toEqual({
@@ -257,7 +266,10 @@ describe("IAMService", () => {
 			(client.send as ReturnType<typeof vi.fn>)
 				// ListAccessKeys
 				.mockResolvedValueOnce({
-					AccessKeyMetadata: [{ AccessKeyId: "AKIA1" }, { AccessKeyId: "AKIA2" }],
+					AccessKeyMetadata: [
+						{ AccessKeyId: "AKIA1" },
+						{ AccessKeyId: "AKIA2" },
+					],
 				})
 				// DeleteAccessKey x2
 				.mockResolvedValueOnce({})
@@ -316,123 +328,219 @@ describe("IAMService", () => {
 
 	describe("error paths for simple methods", () => {
 		it("listGroups throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("LimitExceededException"));
-			await expect(service.listGroups()).rejects.toMatchObject({ statusCode: 429 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("LimitExceededException"),
+			);
+			await expect(service.listGroups()).rejects.toMatchObject({
+				statusCode: 429,
+			});
 		});
 
 		it("createGroup throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("EntityAlreadyExistsException"));
-			await expect(service.createGroup("grp")).rejects.toMatchObject({ statusCode: 409 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("EntityAlreadyExistsException"),
+			);
+			await expect(service.createGroup("grp")).rejects.toMatchObject({
+				statusCode: 409,
+			});
 		});
 
 		it("getGroup throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.getGroup("grp")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.getGroup("grp")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("listAccessKeys throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.listAccessKeys("alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.listAccessKeys("alice")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("createAccessKey throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.createAccessKey("alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.createAccessKey("alice")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("deleteAccessKey throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.deleteAccessKey("alice", "AKID")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.deleteAccessKey("alice", "AKID"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("updateAccessKey throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.updateAccessKey("alice", "AKID", "Inactive")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.updateAccessKey("alice", "AKID", "Inactive"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("addUserToGroup throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.addUserToGroup("grp", "alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.addUserToGroup("grp", "alice"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("removeUserFromGroup throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.removeUserFromGroup("grp", "alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.removeUserFromGroup("grp", "alice"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("listGroupsForUser throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.listGroupsForUser("alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.listGroupsForUser("alice")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("listUserPolicies throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.listUserPolicies("alice")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.listUserPolicies("alice")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("getUserPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.getUserPolicy("alice", "pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.getUserPolicy("alice", "pol")).rejects.toMatchObject(
+				{ statusCode: 404 },
+			);
 		});
 
 		it("putUserPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("MalformedPolicyDocumentException"));
-			await expect(service.putUserPolicy("alice", "pol", "{}")).rejects.toMatchObject({ statusCode: 400 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("MalformedPolicyDocumentException"),
+			);
+			await expect(
+				service.putUserPolicy("alice", "pol", "{}"),
+			).rejects.toMatchObject({ statusCode: 400 });
 		});
 
 		it("deleteUserPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.deleteUserPolicy("alice", "pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.deleteUserPolicy("alice", "pol"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("listGroupPolicies throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.listGroupPolicies("grp")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.listGroupPolicies("grp")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("getGroupPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.getGroupPolicy("grp", "pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.getGroupPolicy("grp", "pol")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("putGroupPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("MalformedPolicyDocumentException"));
-			await expect(service.putGroupPolicy("grp", "pol", "{}")).rejects.toMatchObject({ statusCode: 400 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("MalformedPolicyDocumentException"),
+			);
+			await expect(
+				service.putGroupPolicy("grp", "pol", "{}"),
+			).rejects.toMatchObject({ statusCode: 400 });
 		});
 
 		it("deleteGroupPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.deleteGroupPolicy("grp", "pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.deleteGroupPolicy("grp", "pol"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("listManagedPolicies throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("LimitExceededException"));
-			await expect(service.listManagedPolicies()).rejects.toMatchObject({ statusCode: 429 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("LimitExceededException"),
+			);
+			await expect(service.listManagedPolicies()).rejects.toMatchObject({
+				statusCode: 429,
+			});
 		});
 
 		it("getPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.getPolicy("arn:pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.getPolicy("arn:pol")).rejects.toMatchObject({
+				statusCode: 404,
+			});
 		});
 
 		it("getPolicyDocument throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.getPolicyDocument("arn:pol", "v1")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.getPolicyDocument("arn:pol", "v1"),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 
 		it("createPolicy throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("EntityAlreadyExistsException"));
-			await expect(service.createPolicy("pol", "{}")).rejects.toMatchObject({ statusCode: 409 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("EntityAlreadyExistsException"),
+			);
+			await expect(service.createPolicy("pol", "{}")).rejects.toMatchObject({
+				statusCode: 409,
+			});
 		});
 
 		it("listPolicyVersions throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.listPolicyVersions("arn:pol")).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(service.listPolicyVersions("arn:pol")).rejects.toMatchObject(
+				{ statusCode: 404 },
+			);
 		});
 
 		it("createPolicyVersion throws on error", async () => {
-			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(makeError("NoSuchEntityException"));
-			await expect(service.createPolicyVersion("arn:pol", "{}", true)).rejects.toMatchObject({ statusCode: 404 });
+			(client.send as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+				makeError("NoSuchEntityException"),
+			);
+			await expect(
+				service.createPolicyVersion("arn:pol", "{}", true),
+			).rejects.toMatchObject({ statusCode: 404 });
 		});
 	});
 
@@ -472,7 +580,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when access key fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				AccessKeyMetadata: [{ /* all fields absent */ }],
+				AccessKeyMetadata: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listAccessKeys("alice");
 			expect(result.accessKeys[0]).toEqual({
@@ -510,7 +622,9 @@ describe("IAMService", () => {
 
 		it("uses empty strings when createAccessKey response fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				AccessKey: { /* all fields absent */ },
+				AccessKey: {
+					/* all fields absent */
+				},
 			});
 			const result = await service.createAccessKey("alice");
 			expect(result).toEqual({
@@ -542,7 +656,11 @@ describe("IAMService", () => {
 		it("updates access key status and returns success message", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
-			const result = await service.updateAccessKey("alice", "AKIA1", "Inactive");
+			const result = await service.updateAccessKey(
+				"alice",
+				"AKIA1",
+				"Inactive",
+			);
 
 			expect(result).toEqual({ message: "Access key updated successfully" });
 			const cmd = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -594,7 +712,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when group fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Groups: [{ /* all fields absent */ }],
+				Groups: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listGroups();
 			expect(result.groups[0]).toEqual({
@@ -688,8 +810,14 @@ describe("IAMService", () => {
 
 		it("uses empty strings when group fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Group: { /* all fields absent */ },
-				Users: [{ /* all user fields absent */ }],
+				Group: {
+					/* all fields absent */
+				},
+				Users: [
+					{
+						/* all user fields absent */
+					},
+				],
 			});
 			const result = await service.getGroup("admins");
 			expect(result.group).toEqual({
@@ -823,7 +951,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when group fields are undefined in listGroupsForUser", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Groups: [{ /* all fields absent */ }],
+				Groups: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listGroupsForUser("alice");
 			expect(result.groups[0]).toEqual({
@@ -858,8 +990,7 @@ describe("IAMService", () => {
 
 	describe("getUserPolicy", () => {
 		it("returns policy name and URI-decoded policy document", async () => {
-			const encoded =
-				"%7B%22Version%22%3A%222012-10-17%22%7D";
+			const encoded = "%7B%22Version%22%3A%222012-10-17%22%7D";
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 				PolicyName: "InlinePolicy1",
 				PolicyDocument: encoded,
@@ -887,11 +1018,7 @@ describe("IAMService", () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
 			const doc = '{"Version":"2012-10-17"}';
-			const result = await service.putUserPolicy(
-				"alice",
-				"InlinePolicy1",
-				doc,
-			);
+			const result = await service.putUserPolicy("alice", "InlinePolicy1", doc);
 
 			expect(result).toEqual({ message: "Policy saved successfully" });
 			const cmd = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -967,7 +1094,11 @@ describe("IAMService", () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
 			const doc = '{"Version":"2012-10-17"}';
-			const result = await service.putGroupPolicy("admins", "GroupPolicy1", doc);
+			const result = await service.putGroupPolicy(
+				"admins",
+				"GroupPolicy1",
+				doc,
+			);
 
 			expect(result).toEqual({ message: "Policy saved successfully" });
 			const cmd = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -1066,7 +1197,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when policy fields are undefined in listManagedPolicies", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Policies: [{ /* all fields absent */ }],
+				Policies: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listManagedPolicies();
 			expect(result.policies[0]).toEqual({
@@ -1120,9 +1255,13 @@ describe("IAMService", () => {
 
 		it("uses empty strings and defaults when policy fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Policy: { /* all fields absent */ },
+				Policy: {
+					/* all fields absent */
+				},
 			});
-			const result = await service.getPolicy("arn:aws:iam::000000000000:policy/MyPolicy");
+			const result = await service.getPolicy(
+				"arn:aws:iam::000000000000:policy/MyPolicy",
+			);
 			expect(result).toEqual({
 				policyName: "",
 				policyId: "",
@@ -1259,7 +1398,9 @@ describe("IAMService", () => {
 
 		it("returns empty string for arn when Policy.Arn is undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Policy: { /* Arn absent */ },
+				Policy: {
+					/* Arn absent */
+				},
 			});
 			const result = await service.createPolicy("MyPolicy", "{}");
 			expect(result.arn).toBe("");
@@ -1300,7 +1441,9 @@ describe("IAMService", () => {
 
 		it("skips version deletion and entity detach when there are none", async () => {
 			(client.send as ReturnType<typeof vi.fn>)
-				.mockResolvedValueOnce({ Versions: [{ VersionId: "v1", IsDefaultVersion: true }] })
+				.mockResolvedValueOnce({
+					Versions: [{ VersionId: "v1", IsDefaultVersion: true }],
+				})
 				.mockResolvedValueOnce({ PolicyUsers: [], PolicyGroups: [] })
 				.mockResolvedValueOnce({});
 
@@ -1365,7 +1508,11 @@ describe("IAMService", () => {
 
 		it("uses empty strings when version fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				Versions: [{ /* all fields absent */ }],
+				Versions: [
+					{
+						/* all fields absent */
+					},
+				],
 			});
 			const result = await service.listPolicyVersions(
 				"arn:aws:iam::000000000000:policy/MyPolicy",
@@ -1405,7 +1552,9 @@ describe("IAMService", () => {
 
 		it("uses empty string for versionId when response fields are undefined", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-				PolicyVersion: { /* VersionId absent */ },
+				PolicyVersion: {
+					/* VersionId absent */
+				},
 			});
 			const result = await service.createPolicyVersion(
 				"arn:aws:iam::000000000000:policy/MyPolicy",
@@ -1489,7 +1638,9 @@ describe("IAMService", () => {
 				"arn:aws:iam::aws:policy/ReadOnly",
 			);
 
-			expect(result).toEqual({ message: "Policy attached to user successfully" });
+			expect(result).toEqual({
+				message: "Policy attached to user successfully",
+			});
 			const cmd = (client.send as ReturnType<typeof vi.fn>).mock.calls[0][0];
 			expect(cmd.input).toMatchObject({
 				UserName: "alice",

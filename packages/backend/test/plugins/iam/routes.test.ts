@@ -56,7 +56,9 @@ interface MockIAMService {
 function createMockIAMService(): MockIAMService {
 	return {
 		listUsers: vi.fn().mockResolvedValue({ users: [] }),
-		createUser: vi.fn().mockResolvedValue({ message: "User created successfully" }),
+		createUser: vi
+			.fn()
+			.mockResolvedValue({ message: "User created successfully" }),
 		getUser: vi.fn().mockResolvedValue({
 			userName: "alice",
 			userId: "AIDA123",
@@ -74,20 +76,32 @@ function createMockIAMService(): MockIAMService {
 			createDate: "2024-01-01T00:00:00.000Z",
 		}),
 		deleteAccessKey: vi.fn().mockResolvedValue({ success: true }),
-		updateAccessKey: vi.fn().mockResolvedValue({ message: "Access key updated successfully" }),
+		updateAccessKey: vi
+			.fn()
+			.mockResolvedValue({ message: "Access key updated successfully" }),
 		listUserPolicies: vi.fn().mockResolvedValue({ policyNames: [] }),
 		getUserPolicy: vi.fn().mockResolvedValue({
 			policyName: "my-policy",
 			policyDocument: '{"Version":"2012-10-17","Statement":[]}',
 		}),
-		putUserPolicy: vi.fn().mockResolvedValue({ message: "Policy saved successfully" }),
+		putUserPolicy: vi
+			.fn()
+			.mockResolvedValue({ message: "Policy saved successfully" }),
 		deleteUserPolicy: vi.fn().mockResolvedValue({ success: true }),
-		listAttachedUserPolicies: vi.fn().mockResolvedValue({ attachedPolicies: [] }),
-		attachUserPolicy: vi.fn().mockResolvedValue({ message: "Policy attached to user successfully" }),
-		detachUserPolicy: vi.fn().mockResolvedValue({ message: "Policy detached from user successfully" }),
+		listAttachedUserPolicies: vi
+			.fn()
+			.mockResolvedValue({ attachedPolicies: [] }),
+		attachUserPolicy: vi
+			.fn()
+			.mockResolvedValue({ message: "Policy attached to user successfully" }),
+		detachUserPolicy: vi
+			.fn()
+			.mockResolvedValue({ message: "Policy detached from user successfully" }),
 		listGroupsForUser: vi.fn().mockResolvedValue({ groups: [] }),
 		listGroups: vi.fn().mockResolvedValue({ groups: [] }),
-		createGroup: vi.fn().mockResolvedValue({ message: "Group created successfully" }),
+		createGroup: vi
+			.fn()
+			.mockResolvedValue({ message: "Group created successfully" }),
 		getGroup: vi.fn().mockResolvedValue({
 			group: {
 				groupName: "admins",
@@ -99,17 +113,27 @@ function createMockIAMService(): MockIAMService {
 			members: [],
 		}),
 		deleteGroup: vi.fn().mockResolvedValue({ success: true }),
-		addUserToGroup: vi.fn().mockResolvedValue({ message: "User added to group" }),
-		removeUserFromGroup: vi.fn().mockResolvedValue({ message: "User removed from group" }),
+		addUserToGroup: vi
+			.fn()
+			.mockResolvedValue({ message: "User added to group" }),
+		removeUserFromGroup: vi
+			.fn()
+			.mockResolvedValue({ message: "User removed from group" }),
 		listGroupPolicies: vi.fn().mockResolvedValue({ policyNames: [] }),
 		getGroupPolicy: vi.fn().mockResolvedValue({
 			policyName: "group-policy",
 			policyDocument: '{"Version":"2012-10-17","Statement":[]}',
 		}),
-		putGroupPolicy: vi.fn().mockResolvedValue({ message: "Policy saved successfully" }),
+		putGroupPolicy: vi
+			.fn()
+			.mockResolvedValue({ message: "Policy saved successfully" }),
 		deleteGroupPolicy: vi.fn().mockResolvedValue({ success: true }),
-		listAttachedGroupPolicies: vi.fn().mockResolvedValue({ attachedPolicies: [] }),
-		attachGroupPolicy: vi.fn().mockResolvedValue({ message: "Policy attached to group successfully" }),
+		listAttachedGroupPolicies: vi
+			.fn()
+			.mockResolvedValue({ attachedPolicies: [] }),
+		attachGroupPolicy: vi
+			.fn()
+			.mockResolvedValue({ message: "Policy attached to group successfully" }),
 		detachGroupPolicy: vi.fn().mockResolvedValue({ success: true }),
 		listManagedPolicies: vi.fn().mockResolvedValue({ policies: [] }),
 		createPolicy: vi.fn().mockResolvedValue({
@@ -148,7 +172,9 @@ function createMockIAMService(): MockIAMService {
 
 vi.mock("../../../src/plugins/iam/service.js", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("../../../src/plugins/iam/service.js")>();
+		await importOriginal<
+			typeof import("../../../src/plugins/iam/service.js")
+		>();
 	return {
 		...actual,
 		IAMService: vi.fn(),
@@ -219,7 +245,10 @@ describe("IAM Routes", () => {
 				payload: { userName: "alice", path: "/division/" },
 			});
 			expect(response.statusCode).toBe(201);
-			expect(mockService.createUser).toHaveBeenCalledWith("alice", "/division/");
+			expect(mockService.createUser).toHaveBeenCalledWith(
+				"alice",
+				"/division/",
+			);
 		});
 	});
 
@@ -276,7 +305,10 @@ describe("IAM Routes", () => {
 				url: "/users/alice/access-keys/AKIA123",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.deleteAccessKey).toHaveBeenCalledWith("alice", "AKIA123");
+			expect(mockService.deleteAccessKey).toHaveBeenCalledWith(
+				"alice",
+				"AKIA123",
+			);
 		});
 	});
 
@@ -316,7 +348,10 @@ describe("IAM Routes", () => {
 				url: "/users/alice/inline-policies/my-policy",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.getUserPolicy).toHaveBeenCalledWith("alice", "my-policy");
+			expect(mockService.getUserPolicy).toHaveBeenCalledWith(
+				"alice",
+				"my-policy",
+			);
 		});
 	});
 
@@ -345,7 +380,10 @@ describe("IAM Routes", () => {
 				url: "/users/alice/inline-policies/my-policy",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.deleteUserPolicy).toHaveBeenCalledWith("alice", "my-policy");
+			expect(mockService.deleteUserPolicy).toHaveBeenCalledWith(
+				"alice",
+				"my-policy",
+			);
 		});
 	});
 
@@ -358,7 +396,9 @@ describe("IAM Routes", () => {
 				url: "/users/alice/attached-policies",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.listAttachedUserPolicies).toHaveBeenCalledWith("alice");
+			expect(mockService.listAttachedUserPolicies).toHaveBeenCalledWith(
+				"alice",
+			);
 		});
 	});
 
@@ -434,7 +474,10 @@ describe("IAM Routes", () => {
 				payload: { groupName: "admins", path: "/division/" },
 			});
 			expect(response.statusCode).toBe(201);
-			expect(mockService.createGroup).toHaveBeenCalledWith("admins", "/division/");
+			expect(mockService.createGroup).toHaveBeenCalledWith(
+				"admins",
+				"/division/",
+			);
 		});
 	});
 
@@ -470,7 +513,10 @@ describe("IAM Routes", () => {
 				payload: { userName: "alice" },
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.addUserToGroup).toHaveBeenCalledWith("admins", "alice");
+			expect(mockService.addUserToGroup).toHaveBeenCalledWith(
+				"admins",
+				"alice",
+			);
 		});
 	});
 
@@ -481,7 +527,10 @@ describe("IAM Routes", () => {
 				url: "/groups/admins/members/alice",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.removeUserFromGroup).toHaveBeenCalledWith("admins", "alice");
+			expect(mockService.removeUserFromGroup).toHaveBeenCalledWith(
+				"admins",
+				"alice",
+			);
 		});
 	});
 
@@ -505,7 +554,10 @@ describe("IAM Routes", () => {
 				url: "/groups/admins/inline-policies/group-policy",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.getGroupPolicy).toHaveBeenCalledWith("admins", "group-policy");
+			expect(mockService.getGroupPolicy).toHaveBeenCalledWith(
+				"admins",
+				"group-policy",
+			);
 		});
 	});
 
@@ -534,7 +586,10 @@ describe("IAM Routes", () => {
 				url: "/groups/admins/inline-policies/group-policy",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.deleteGroupPolicy).toHaveBeenCalledWith("admins", "group-policy");
+			expect(mockService.deleteGroupPolicy).toHaveBeenCalledWith(
+				"admins",
+				"group-policy",
+			);
 		});
 	});
 
@@ -547,7 +602,9 @@ describe("IAM Routes", () => {
 				url: "/groups/admins/attached-policies",
 			});
 			expect(response.statusCode).toBe(200);
-			expect(mockService.listAttachedGroupPolicies).toHaveBeenCalledWith("admins");
+			expect(mockService.listAttachedGroupPolicies).toHaveBeenCalledWith(
+				"admins",
+			);
 		});
 	});
 

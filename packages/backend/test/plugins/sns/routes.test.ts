@@ -43,16 +43,13 @@ function createMockSNSService(): MockSNSService {
 		}),
 		setTopicAttributes: vi.fn().mockResolvedValue({ success: true }),
 		listAllSubscriptions: vi.fn().mockResolvedValue({ subscriptions: [] }),
-		listSubscriptionsByTopic: vi
-			.fn()
-			.mockResolvedValue({ subscriptions: [] }),
+		listSubscriptionsByTopic: vi.fn().mockResolvedValue({ subscriptions: [] }),
 		createSubscription: vi
 			.fn()
 			.mockResolvedValue({ message: "Subscription created successfully" }),
 		deleteSubscription: vi.fn().mockResolvedValue({ success: true }),
 		getSubscriptionAttributes: vi.fn().mockResolvedValue({
-			subscriptionArn:
-				"arn:aws:sns:us-east-1:000000000000:test-topic:abc-123",
+			subscriptionArn: "arn:aws:sns:us-east-1:000000000000:test-topic:abc-123",
 			topicArn: "arn:aws:sns:us-east-1:000000000000:test-topic",
 			protocol: "sqs",
 			endpoint: "arn:aws:sqs:us-east-1:000000000000:test-queue",

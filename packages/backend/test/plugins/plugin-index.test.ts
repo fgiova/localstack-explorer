@@ -1,15 +1,14 @@
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
+// clientCachePlugin uses fastify-plugin (fp) so it decorates the root instance.
+// We register the real plugins here to verify the index.ts wrappers boot correctly.
+import clientCachePlugin from "../../src/plugins/client-cache.js";
 import cloudformationPlugin from "../../src/plugins/cloudformation/index.js";
 import dynamodbPlugin from "../../src/plugins/dynamodb/index.js";
 import iamPlugin from "../../src/plugins/iam/index.js";
 import localstackConfigPlugin from "../../src/plugins/localstack-config.js";
 import snsPlugin from "../../src/plugins/sns/index.js";
 import sqsPlugin from "../../src/plugins/sqs/index.js";
-
-// clientCachePlugin uses fastify-plugin (fp) so it decorates the root instance.
-// We register the real plugins here to verify the index.ts wrappers boot correctly.
-import clientCachePlugin from "../../src/plugins/client-cache.js";
 
 describe("plugin index files", () => {
 	it("should register sqsPlugin without error", async () => {

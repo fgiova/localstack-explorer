@@ -79,9 +79,7 @@ function Dashboard() {
 	const { data } = useEnabledServices();
 	const { data: healthData } = useHealthCheck();
 	const enabledSet = data ? new Set(data.services) : null;
-	const activeSet = healthData?.services
-		? new Set(healthData.services)
-		: null;
+	const activeSet = healthData?.services ? new Set(healthData.services) : null;
 
 	const visibleServices = enabledSet
 		? services.filter((s) => enabledSet.has(s.key))
@@ -95,17 +93,14 @@ function Dashboard() {
 			</p>
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 				{visibleServices.map((service) => {
-					const isServiceActive =
-						!activeSet || activeSet.has(service.key);
+					const isServiceActive = !activeSet || activeSet.has(service.key);
 
 					if (!isServiceActive) {
 						return (
 							<div key={service.path} className="block">
 								<Card className="opacity-40 cursor-not-allowed">
 									<CardHeader className="flex flex-row items-center gap-4">
-										<service.icon
-											className={cn("h-8 w-8", service.color)}
-										/>
+										<service.icon className={cn("h-8 w-8", service.color)} />
 										<div>
 											<CardTitle>{service.name}</CardTitle>
 											<CardDescription>
@@ -127,14 +122,10 @@ function Dashboard() {
 						<Link key={service.path} to={service.path} className="block">
 							<Card className="transition-shadow hover:shadow-lg">
 								<CardHeader className="flex flex-row items-center gap-4">
-									<service.icon
-										className={cn("h-8 w-8", service.color)}
-									/>
+									<service.icon className={cn("h-8 w-8", service.color)} />
 									<div>
 										<CardTitle>{service.name}</CardTitle>
-										<CardDescription>
-											{service.description}
-										</CardDescription>
+										<CardDescription>{service.description}</CardDescription>
 									</div>
 								</CardHeader>
 								<CardContent>

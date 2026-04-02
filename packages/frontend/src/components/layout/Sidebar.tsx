@@ -73,9 +73,7 @@ export function Sidebar() {
 	const { data } = useEnabledServices();
 	const { data: healthData } = useHealthCheck();
 	const enabledSet = data ? new Set(data.services) : null;
-	const activeSet = healthData?.services
-		? new Set(healthData.services)
-		: null;
+	const activeSet = healthData?.services ? new Set(healthData.services) : null;
 
 	const visibleServices = enabledSet
 		? services.filter((s) => enabledSet.has(s.key))

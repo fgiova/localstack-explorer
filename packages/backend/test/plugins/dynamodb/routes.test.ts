@@ -40,20 +40,31 @@ function createMockDynamoDBService(): MockDynamoDBService {
 			keySchema: [{ attributeName: "id", keyType: "HASH" }],
 			attributeDefinitions: [{ attributeName: "id", attributeType: "S" }],
 		}),
-		createTable: vi.fn().mockResolvedValue({ message: "Table created successfully" }),
+		createTable: vi
+			.fn()
+			.mockResolvedValue({ message: "Table created successfully" }),
 		deleteTable: vi.fn().mockResolvedValue({ success: true }),
 		createGSI: vi.fn().mockResolvedValue({ message: "GSI creation initiated" }),
 		deleteGSI: vi.fn().mockResolvedValue({ success: true }),
-		scanItems: vi.fn().mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
-		queryItems: vi.fn().mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
-		getItem: vi.fn().mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
+		scanItems: vi
+			.fn()
+			.mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
+		queryItems: vi
+			.fn()
+			.mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
+		getItem: vi
+			.fn()
+			.mockResolvedValue({ items: [], count: 0, scannedCount: 0 }),
 		putItem: vi.fn().mockResolvedValue({ message: "Item saved successfully" }),
 		deleteItem: vi.fn().mockResolvedValue({ success: true }),
-		batchWriteItems: vi.fn().mockResolvedValue({ processedCount: 0, unprocessedCount: 0 }),
+		batchWriteItems: vi
+			.fn()
+			.mockResolvedValue({ processedCount: 0, unprocessedCount: 0 }),
 		batchGetItems: vi.fn().mockResolvedValue({ items: [] }),
 		executePartiQL: vi.fn().mockResolvedValue({ items: [] }),
 		describeStream: vi.fn().mockResolvedValue({
-			streamArn: "arn:aws:dynamodb:us-east-1:000000000000:table/test-table/stream/2024-01-01T00:00:00.000",
+			streamArn:
+				"arn:aws:dynamodb:us-east-1:000000000000:table/test-table/stream/2024-01-01T00:00:00.000",
 			streamLabel: "2024-01-01T00:00:00.000",
 			streamStatus: "ENABLED",
 			streamViewType: "NEW_AND_OLD_IMAGES",

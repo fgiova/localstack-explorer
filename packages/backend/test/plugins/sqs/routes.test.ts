@@ -27,9 +27,10 @@ interface MockSQSService {
 function createMockSQSService(): MockSQSService {
 	return {
 		listQueues: vi.fn().mockResolvedValue({ queues: [] }),
-		createQueue: vi
-			.fn()
-			.mockResolvedValue({ message: "Queue created", queueUrl: "http://sqs/test-queue" }),
+		createQueue: vi.fn().mockResolvedValue({
+			message: "Queue created",
+			queueUrl: "http://sqs/test-queue",
+		}),
 		getQueueUrl: vi.fn().mockResolvedValue("http://sqs/test-queue"),
 		deleteQueue: vi.fn().mockResolvedValue({ success: true }),
 		purgeQueue: vi.fn().mockResolvedValue({ success: true }),

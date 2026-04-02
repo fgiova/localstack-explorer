@@ -1,10 +1,13 @@
-import { afterAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // We need to intercept the matchFilter callback so we can test it.
 let capturedMatchFilter: ((pluginPath: string) => boolean) | undefined;
 
 vi.mock("@fastify/autoload", () => ({
-	default: async (_app: unknown, opts: { matchFilter?: (p: string) => boolean }) => {
+	default: async (
+		_app: unknown,
+		opts: { matchFilter?: (p: string) => boolean },
+	) => {
 		capturedMatchFilter = opts?.matchFilter;
 		// no-op: don't load any plugins dynamically
 	},
@@ -36,13 +39,17 @@ vi.mock("@fastify/static", () => {
 
 // Mock checkLocalstackHealth so the health endpoint can be called in tests.
 vi.mock("../src/health.js", () => ({
-	checkLocalstackHealth: vi
-		.fn()
-		.mockResolvedValue({ connected: true, endpoint: "http://localhost:4566", region: "us-east-1", services: ["s3", "sqs", "sns", "iam", "cloudformation", "dynamodb"] }),
+	checkLocalstackHealth: vi.fn().mockResolvedValue({
+		connected: true,
+		endpoint: "http://localhost:4566",
+		region: "us-east-1",
+		services: ["s3", "sqs", "sns", "iam", "cloudformation", "dynamodb"],
+	}),
 }));
 
 // Mock fs.existsSync so we can control whether publicDir "exists"
 import fs from "node:fs";
+
 vi.spyOn(fs, "existsSync").mockReturnValue(true);
 
 import { buildApp } from "../src/index.js";
@@ -114,8 +121,8 @@ describe("buildApp", () => {
 		await app.close();
 
 		expect(capturedMatchFilter).toBeDefined();
-		expect(capturedMatchFilter!("/s3/index.js")).toBe(true);
-		expect(capturedMatchFilter!("/sqs/index.js")).toBe(true);
+		expect(capturedMatchFilter?.("/s3/index.js")).toBe(true);
+		expect(capturedMatchFilter?.("/sqs/index.js")).toBe(true);
 	});
 
 	it("matchFilter returns false for disabled/unknown service directories", async () => {
@@ -123,6 +130,6 @@ describe("buildApp", () => {
 		await app.close();
 
 		expect(capturedMatchFilter).toBeDefined();
-		expect(capturedMatchFilter!("/unknownservice/index.js")).toBe(false);
+		expect(capturedMatchFilter?.("/unknownservice/index.js")).toBe(false);
 	});
 });
