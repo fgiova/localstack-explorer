@@ -1,3 +1,16 @@
+# [1.2.0](https://github.com/fgiova/localstack-explorer/compare/v1.1.0...v1.2.0) (2026-04-02)
+
+
+### Bug Fixes
+
+* handle InternalError with AppError and improve timeout settings in integration tests ([c3eb255](https://github.com/fgiova/localstack-explorer/commit/c3eb25548fd6fdf0a820d61a690e4794d514fd31))
+
+
+### Features
+
+* add Lambda service plugin with full CRUD, invoke, versions, and aliases ([d1466e4](https://github.com/fgiova/localstack-explorer/commit/d1466e4de6dab1fee7c3f176d8faa666f4272932))
+* add triggers tab to Lambda plugin with event source mappings and resource policy detection ([f5b9397](https://github.com/fgiova/localstack-explorer/commit/f5b9397801aaa2c7a6723e34bb7bf20f65ec6ea5))
+
 # [1.1.0](https://github.com/fgiova/localstack-explorer/compare/v1.0.0...v1.1.0) (2026-04-02)
 
 
