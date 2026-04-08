@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/fgiova/localstack-explorer/compare/v1.2.0...v1.3.0) (2026-04-08)
+
+
+### Features
+
+* add S3 folder management and SQS queue attribute editing ([c342d1b](https://github.com/fgiova/localstack-explorer/commit/c342d1b2406a5453959f64ea9d5760ec6e6306c4))
+
 # [1.2.0](https://github.com/fgiova/localstack-explorer/compare/v1.1.0...v1.2.0) (2026-04-02)
 
 
