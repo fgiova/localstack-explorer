@@ -53,6 +53,14 @@ interface ReceiveMessagesResponse {
 	messages: Message[];
 }
 
+interface UpdateQueueAttributesRequest {
+	delaySeconds?: number;
+	maximumMessageSize?: number;
+	messageRetentionPeriod?: number;
+	receiveMessageWaitTimeSeconds?: number;
+	visibilityTimeout?: number;
+}
+
 interface CreateQueueRequest {
 	name: string;
 }
@@ -142,6 +150,22 @@ export function useQueueSubscriptions(queueArn: string) {
 }
 
 // --- Mutation hooks ---
+
+export function useUpdateQueueAttributes(queueName: string) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (request: UpdateQueueAttributesRequest) =>
+			apiClient.put<{ success: boolean }>(
+				`/sqs/${queueName}/attributes`,
+				request,
+			),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["sqs", "attributes", queueName],
+			});
+		},
+	});
+}
 
 export function useCreateQueue() {
 	const queryClient = useQueryClient();

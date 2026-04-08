@@ -4,6 +4,7 @@ import {
 	BucketListResponseSchema,
 	BucketParamsSchema,
 	CreateBucketBodySchema,
+	CreateFolderBodySchema,
 	DeleteResponseSchema,
 	ListObjectsQuerySchema,
 	ListObjectsResponseSchema,
@@ -105,6 +106,50 @@ export async function s3Routes(app: FastifyInstance) {
 				continuationToken,
 				maxKeys,
 			);
+		},
+	});
+
+	// Create folder
+	app.post("/:bucketName/objects/folder", {
+		schema: {
+			params: BucketParamsSchema,
+			body: CreateFolderBodySchema,
+			response: {
+				201: UploadResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request, reply) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new S3Service(clients.s3);
+			const { bucketName } = request.params as { bucketName: string };
+			const { name } = request.body as { name: string };
+			const result = await service.createFolder(bucketName, name);
+			return reply.status(201).send(result);
+		},
+	});
+
+	// Delete folder
+	app.delete("/:bucketName/objects/folder", {
+		schema: {
+			params: BucketParamsSchema,
+			querystring: ObjectKeyQuerySchema,
+			response: {
+				200: DeleteResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new S3Service(clients.s3);
+			const { bucketName } = request.params as { bucketName: string };
+			const { key } = request.query as { key: string };
+			return service.deleteFolder(bucketName, key);
 		},
 	});
 

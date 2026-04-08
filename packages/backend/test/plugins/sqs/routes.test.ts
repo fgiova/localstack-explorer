@@ -19,6 +19,7 @@ interface MockSQSService {
 	deleteQueue: Mock;
 	purgeQueue: Mock;
 	getQueueDetail: Mock;
+	updateQueueAttributes: Mock;
 	sendMessage: Mock;
 	receiveMessages: Mock;
 	deleteMessage: Mock;
@@ -49,6 +50,7 @@ function createMockSQSService(): MockSQSService {
 			delaySeconds: 0,
 			receiveMessageWaitTimeSeconds: 0,
 		}),
+		updateQueueAttributes: vi.fn().mockResolvedValue({ success: true }),
 		sendMessage: vi.fn().mockResolvedValue({ messageId: "msg-123" }),
 		receiveMessages: vi.fn().mockResolvedValue([]),
 		deleteMessage: vi.fn().mockResolvedValue({ success: true }),
@@ -101,6 +103,38 @@ describe("SQS Routes", () => {
 
 	afterAll(async () => {
 		await app.close();
+	});
+
+	describe("PUT /:queueName/attributes (updateQueueAttributes)", () => {
+		it("should update queue attributes", async () => {
+			const response = await app.inject({
+				method: "PUT",
+				url: "/test-queue/attributes",
+				payload: {
+					visibilityTimeout: 60,
+					delaySeconds: 5,
+				},
+			});
+			expect(response.statusCode).toBe(200);
+			const body = response.json<{ success: boolean }>();
+			expect(body.success).toBe(true);
+			expect(mockService.updateQueueAttributes).toHaveBeenCalledWith(
+				"test-queue",
+				expect.objectContaining({
+					visibilityTimeout: 60,
+					delaySeconds: 5,
+				}),
+			);
+		});
+
+		it("should accept empty attributes object", async () => {
+			const response = await app.inject({
+				method: "PUT",
+				url: "/test-queue/attributes",
+				payload: {},
+			});
+			expect(response.statusCode).toBe(200);
+		});
 	});
 
 	describe("DELETE /:queueName/messages (deleteMessage)", () => {

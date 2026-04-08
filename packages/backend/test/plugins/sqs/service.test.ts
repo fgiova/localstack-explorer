@@ -505,6 +505,70 @@ describe("SQSService", () => {
 		});
 	});
 
+	describe("updateQueueAttributes", () => {
+		it("updates all provided attributes", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				.mockResolvedValueOnce({});
+
+			const result = await service.updateQueueAttributes("my-queue", {
+				delaySeconds: 10,
+				maximumMessageSize: 131072,
+				messageRetentionPeriod: 86400,
+				receiveMessageWaitTimeSeconds: 5,
+				visibilityTimeout: 60,
+			});
+
+			expect(result).toEqual({ success: true });
+			const setCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[1][0];
+			expect(setCall.input).toMatchObject({
+				QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				Attributes: {
+					DelaySeconds: "10",
+					MaximumMessageSize: "131072",
+					MessageRetentionPeriod: "86400",
+					ReceiveMessageWaitTimeSeconds: "5",
+					VisibilityTimeout: "60",
+				},
+			});
+		});
+
+		it("updates only provided attributes (partial update)", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				.mockResolvedValueOnce({});
+
+			await service.updateQueueAttributes("my-queue", {
+				visibilityTimeout: 45,
+			});
+
+			const setCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[1][0];
+			expect(setCall.input.Attributes).toEqual({
+				VisibilityTimeout: "45",
+			});
+		});
+
+		it("sends empty attributes when none provided", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					QueueUrl: "http://localhost:4566/000000000000/my-queue",
+				})
+				.mockResolvedValueOnce({});
+
+			await service.updateQueueAttributes("my-queue", {});
+
+			const setCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[1][0];
+			expect(setCall.input.Attributes).toEqual({});
+		});
+	});
+
 	describe("deleteMessage", () => {
 		it("deletes a message with the given receipt handle", async () => {
 			(client.send as ReturnType<typeof vi.fn>)

@@ -3,11 +3,17 @@ import {
 	Download,
 	FileText,
 	Folder,
+	FolderPlus,
 	Trash2,
 	Upload,
 } from "lucide-react";
 import { useState } from "react";
-import { getDownloadUrl, useDeleteObject, useListObjects } from "@/api/s3";
+import {
+	getDownloadUrl,
+	useDeleteFolder,
+	useDeleteObject,
+	useListObjects,
+} from "@/api/s3";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -32,6 +38,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { FolderCreateDialog } from "./FolderCreateDialog";
 import { ObjectUploadDialog } from "./ObjectUploadDialog";
 
 function formatBytes(bytes: number | undefined): string {
@@ -49,10 +56,15 @@ interface ObjectBrowserProps {
 export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
 	const [prefix, setPrefix] = useState("");
 	const [uploadOpen, setUploadOpen] = useState(false);
+	const [folderOpen, setFolderOpen] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+	const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(
+		null,
+	);
 
 	const { data, isLoading, error } = useListObjects(bucketName, prefix);
 	const deleteObject = useDeleteObject(bucketName);
+	const deleteFolder = useDeleteFolder(bucketName);
 
 	const pathParts = prefix.split("/").filter(Boolean);
 
@@ -120,6 +132,10 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
 							Back
 						</Button>
 					)}
+					<Button variant="outline" onClick={() => setFolderOpen(true)}>
+						<FolderPlus className="mr-2 h-4 w-4" />
+						Create Folder
+					</Button>
 					<Button onClick={() => setUploadOpen(true)}>
 						<Upload className="mr-2 h-4 w-4" />
 						Upload
@@ -154,7 +170,18 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
 								</TableCell>
 								<TableCell>{"\u2014"}</TableCell>
 								<TableCell>{"\u2014"}</TableCell>
-								<TableCell />
+								<TableCell>
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={(e) => {
+											e.stopPropagation();
+											setDeleteFolderTarget(cp.prefix);
+										}}
+									>
+										<Trash2 className="h-4 w-4 text-destructive" />
+									</Button>
+								</TableCell>
 							</TableRow>
 						))}
 						{data?.objects
@@ -200,6 +227,13 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
 				onOpenChange={setUploadOpen}
 			/>
 
+			<FolderCreateDialog
+				bucketName={bucketName}
+				prefix={prefix}
+				open={folderOpen}
+				onOpenChange={setFolderOpen}
+			/>
+
 			<Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
 				<DialogContent>
 					<DialogHeader>
@@ -224,6 +258,43 @@ export function ObjectBrowser({ bucketName }: ObjectBrowserProps) {
 							disabled={deleteObject.isPending}
 						>
 							{deleteObject.isPending ? "Deleting..." : "Delete"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={!!deleteFolderTarget}
+				onOpenChange={() => setDeleteFolderTarget(null)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete Folder</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete folder &quot;
+							{deleteFolderTarget?.replace(prefix, "").replace(/\/$/, "")}
+							&quot; and all its contents?
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setDeleteFolderTarget(null)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={() => {
+								if (deleteFolderTarget) {
+									deleteFolder.mutate(deleteFolderTarget, {
+										onSettled: () => setDeleteFolderTarget(null),
+									});
+								}
+							}}
+							disabled={deleteFolder.isPending}
+						>
+							{deleteFolder.isPending ? "Deleting..." : "Delete"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

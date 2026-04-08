@@ -40,6 +40,25 @@ export const QueueDetailResponseSchema = Type.Object({
 });
 export type QueueDetailResponse = Static<typeof QueueDetailResponseSchema>;
 
+export const UpdateQueueAttributesBodySchema = Type.Object({
+	delaySeconds: Type.Optional(Type.Integer({ minimum: 0, maximum: 900 })),
+	maximumMessageSize: Type.Optional(
+		Type.Integer({ minimum: 1024, maximum: 262144 }),
+	),
+	messageRetentionPeriod: Type.Optional(
+		Type.Integer({ minimum: 60, maximum: 1209600 }),
+	),
+	receiveMessageWaitTimeSeconds: Type.Optional(
+		Type.Integer({ minimum: 0, maximum: 20 }),
+	),
+	visibilityTimeout: Type.Optional(
+		Type.Integer({ minimum: 0, maximum: 43200 }),
+	),
+});
+export type UpdateQueueAttributesBody = Static<
+	typeof UpdateQueueAttributesBodySchema
+>;
+
 export const MessageAttributeSchema = Type.Object({
 	name: Type.String(),
 	dataType: Type.String(),

@@ -16,6 +16,7 @@ const mockUsePurgeQueue = vi.fn();
 const mockUseReceiveMessages = vi.fn();
 const mockUseDeleteMessage = vi.fn();
 const mockUseSendMessage = vi.fn();
+const mockUseUpdateQueueAttributes = vi.fn();
 
 vi.mock("../../../src/api/sqs", () => ({
 	useQueueAttributes: () => mockUseQueueAttributes(),
@@ -23,6 +24,7 @@ vi.mock("../../../src/api/sqs", () => ({
 	useReceiveMessages: () => mockUseReceiveMessages(),
 	useDeleteMessage: () => mockUseDeleteMessage(),
 	useSendMessage: () => mockUseSendMessage(),
+	useUpdateQueueAttributes: () => mockUseUpdateQueueAttributes(),
 }));
 
 const TEST_QUEUE_NAME = "test-queue";
@@ -81,6 +83,13 @@ describe("QueueDetail", () => {
 		});
 		mockUseSendMessage.mockReturnValue({
 			mutate: mockSendMessageMutate,
+			isPending: false,
+			isError: false,
+			error: null,
+			isSuccess: false,
+		});
+		mockUseUpdateQueueAttributes.mockReturnValue({
+			mutate: vi.fn(),
 			isPending: false,
 			isError: false,
 			error: null,

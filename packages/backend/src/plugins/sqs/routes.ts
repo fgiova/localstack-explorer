@@ -12,6 +12,8 @@ import {
 	ReceiveMessagesResponseSchema,
 	SendMessageBodySchema,
 	SendMessageResponseSchema,
+	type UpdateQueueAttributesBody,
+	UpdateQueueAttributesBodySchema,
 } from "./schemas.js";
 import { SQSService } from "./service.js";
 
@@ -116,6 +118,28 @@ export async function sqsRoutes(app: FastifyInstance) {
 			const service = new SQSService(clients.sqs);
 			const { queueName } = request.params as { queueName: string };
 			return service.getQueueDetail(queueName);
+		},
+	});
+
+	// Update queue attributes
+	app.put("/:queueName/attributes", {
+		schema: {
+			params: QueueParamsSchema,
+			body: UpdateQueueAttributesBodySchema,
+			response: {
+				200: DeleteResponseSchema,
+				404: ErrorResponseSchema,
+			},
+		},
+		handler: async (request) => {
+			const clients = request.server.clientCache.getClients(
+				request.localstackConfig.endpoint,
+				request.localstackConfig.region,
+			);
+			const service = new SQSService(clients.sqs);
+			const { queueName } = request.params as { queueName: string };
+			const body = request.body as UpdateQueueAttributesBody;
+			return service.updateQueueAttributes(queueName, body);
 		},
 	});
 
