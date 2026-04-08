@@ -18,6 +18,8 @@ interface MockS3Service {
 	createBucket: Mock;
 	deleteBucket: Mock;
 	listObjects: Mock;
+	createFolder: Mock;
+	deleteFolder: Mock;
 	getObjectProperties: Mock;
 	uploadObject: Mock;
 	downloadObject: Mock;
@@ -37,6 +39,10 @@ function createMockS3Service(): MockS3Service {
 			message: "Bucket 'new-bucket' created successfully",
 		}),
 		deleteBucket: vi.fn().mockResolvedValue({ success: true }),
+		createFolder: vi
+			.fn()
+			.mockResolvedValue({ key: "new-folder/", bucket: "test-bucket" }),
+		deleteFolder: vi.fn().mockResolvedValue({ success: true }),
 		listObjects: vi.fn().mockResolvedValue({
 			objects: [
 				{
@@ -236,6 +242,65 @@ describe("S3 Routes", () => {
 				"abc123",
 				undefined,
 			);
+		});
+	});
+
+	describe("POST /:bucketName/objects/folder (createFolder)", () => {
+		it("should create a folder and return 201", async () => {
+			const response = await app.inject({
+				method: "POST",
+				url: "/test-bucket/objects/folder",
+				payload: { name: "new-folder" },
+			});
+			expect(response.statusCode).toBe(201);
+			const body = response.json<{ key: string; bucket: string }>();
+			expect(body.key).toBe("new-folder/");
+			expect(body.bucket).toBe("test-bucket");
+			expect(mockService.createFolder).toHaveBeenCalledWith(
+				"test-bucket",
+				"new-folder",
+			);
+		});
+
+		it("should return 400 for missing name in body", async () => {
+			const response = await app.inject({
+				method: "POST",
+				url: "/test-bucket/objects/folder",
+				payload: {},
+			});
+			expect(response.statusCode).toBe(400);
+		});
+
+		it("should return 400 for empty body", async () => {
+			const response = await app.inject({
+				method: "POST",
+				url: "/test-bucket/objects/folder",
+			});
+			expect(response.statusCode).toBe(400);
+		});
+	});
+
+	describe("DELETE /:bucketName/objects/folder (deleteFolder)", () => {
+		it("should delete a folder and return success", async () => {
+			const response = await app.inject({
+				method: "DELETE",
+				url: "/test-bucket/objects/folder?key=my-folder/",
+			});
+			expect(response.statusCode).toBe(200);
+			const body = response.json<{ success: boolean }>();
+			expect(body.success).toBe(true);
+			expect(mockService.deleteFolder).toHaveBeenCalledWith(
+				"test-bucket",
+				"my-folder/",
+			);
+		});
+
+		it("should return 400 when key query param is missing", async () => {
+			const response = await app.inject({
+				method: "DELETE",
+				url: "/test-bucket/objects/folder",
+			});
+			expect(response.statusCode).toBe(400);
 		});
 	});
 

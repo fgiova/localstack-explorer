@@ -425,6 +425,119 @@ describe("S3Service", () => {
 		});
 	});
 
+	describe("createFolder", () => {
+		it("creates a folder with trailing slash and returns key and bucket", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.createFolder("my-bucket", "new-folder");
+
+			expect(result).toEqual({ key: "new-folder/", bucket: "my-bucket" });
+			expect(client.send).toHaveBeenCalledOnce();
+			const putCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[0][0];
+			expect(putCall.input).toMatchObject({
+				Bucket: "my-bucket",
+				Key: "new-folder/",
+				Body: "",
+				ContentType: "application/x-directory",
+			});
+		});
+
+		it("does not double trailing slash when name already ends with /", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.createFolder("my-bucket", "folder/");
+
+			expect(result).toEqual({ key: "folder/", bucket: "my-bucket" });
+			const putCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[0][0];
+			expect(putCall.input.Key).toBe("folder/");
+		});
+
+		it("supports nested folder paths", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+			const result = await service.createFolder(
+				"my-bucket",
+				"parent/child/subfolder",
+			);
+
+			expect(result).toEqual({
+				key: "parent/child/subfolder/",
+				bucket: "my-bucket",
+			});
+		});
+	});
+
+	describe("deleteFolder", () => {
+		it("deletes all objects under a folder prefix", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					Contents: [{ Key: "folder/file1.txt" }, { Key: "folder/file2.txt" }],
+					IsTruncated: false,
+				})
+				.mockResolvedValueOnce({}); // DeleteObjectsCommand
+
+			const result = await service.deleteFolder("my-bucket", "folder");
+
+			expect(result).toEqual({ success: true });
+			expect(client.send).toHaveBeenCalledTimes(2);
+			const deleteCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[1][0];
+			expect(deleteCall.input).toMatchObject({
+				Bucket: "my-bucket",
+				Delete: {
+					Objects: [{ Key: "folder/file1.txt" }, { Key: "folder/file2.txt" }],
+					Quiet: true,
+				},
+			});
+		});
+
+		it("handles pagination when deleting many objects", async () => {
+			(client.send as ReturnType<typeof vi.fn>)
+				.mockResolvedValueOnce({
+					Contents: [{ Key: "folder/file1.txt" }],
+					IsTruncated: true,
+					NextContinuationToken: "token-1",
+				})
+				.mockResolvedValueOnce({}) // DeleteObjectsCommand for first batch
+				.mockResolvedValueOnce({
+					Contents: [{ Key: "folder/file2.txt" }],
+					IsTruncated: false,
+				})
+				.mockResolvedValueOnce({}); // DeleteObjectsCommand for second batch
+
+			const result = await service.deleteFolder("my-bucket", "folder/");
+
+			expect(result).toEqual({ success: true });
+			expect(client.send).toHaveBeenCalledTimes(4);
+		});
+
+		it("handles empty folder (no objects to delete)", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				Contents: [],
+				IsTruncated: false,
+			});
+
+			const result = await service.deleteFolder("my-bucket", "empty-folder");
+
+			expect(result).toEqual({ success: true });
+			expect(client.send).toHaveBeenCalledTimes(1);
+		});
+
+		it("does not double trailing slash when prefix already ends with /", async () => {
+			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+				IsTruncated: false,
+			});
+
+			await service.deleteFolder("my-bucket", "folder/");
+
+			const listCall = (client.send as ReturnType<typeof vi.fn>).mock
+				.calls[0][0];
+			expect(listCall.input.Prefix).toBe("folder/");
+		});
+	});
+
 	describe("uploadObject", () => {
 		it("uploads an object and returns key and bucket", async () => {
 			(client.send as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});

@@ -18,6 +18,10 @@ export const BucketParamsSchema = Type.Object({
 	bucketName: Type.String(),
 });
 
+export const CreateFolderBodySchema = Type.Object({
+	name: Type.String({ minLength: 1, maxLength: 1024 }),
+});
+
 export const ListObjectsQuerySchema = Type.Object({
 	prefix: Type.Optional(Type.String()),
 	delimiter: Type.Optional(Type.String()),

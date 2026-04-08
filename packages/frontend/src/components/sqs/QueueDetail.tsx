@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { usePurgeQueue, useQueueAttributes } from "@/api/sqs";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { MessageViewer } from "./MessageViewer";
+import { QueueEditAttributesDialog } from "./QueueEditAttributesDialog";
 import { QueueSubscriptions } from "./QueueSubscriptions";
 import { SendMessageForm } from "./SendMessageForm";
 
@@ -67,6 +68,7 @@ interface QueueDetailProps {
 export function QueueDetail({ queueName }: QueueDetailProps) {
 	const [activeTab, setActiveTab] = useState<TabId>("attributes");
 	const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
 
 	const { data: attributes, isLoading, error } = useQueueAttributes(queueName);
 	const purgeQueue = usePurgeQueue();
@@ -158,8 +160,16 @@ export function QueueDetail({ queueName }: QueueDetailProps) {
 					{/* Tab: Attributes */}
 					{activeTab === "attributes" && (
 						<Card>
-							<CardHeader>
+							<CardHeader className="flex flex-row items-center justify-between">
 								<CardTitle>Queue Attributes</CardTitle>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setEditDialogOpen(true)}
+								>
+									<Pencil className="mr-2 h-4 w-4" />
+									Edit
+								</Button>
 							</CardHeader>
 							<CardContent>
 								<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -208,6 +218,16 @@ export function QueueDetail({ queueName }: QueueDetailProps) {
 										}
 									/>
 									<AttributeItem
+										label="Receive Message Wait Time"
+										value={
+											attributes?.receiveMessageWaitTimeSeconds !== undefined
+												? formatSeconds(
+														attributes.receiveMessageWaitTimeSeconds,
+													)
+												: undefined
+										}
+									/>
+									<AttributeItem
 										label="Created"
 										value={formatTimestamp(attributes?.createdTimestamp)}
 									/>
@@ -227,6 +247,23 @@ export function QueueDetail({ queueName }: QueueDetailProps) {
 						<QueueSubscriptions queueArn={attributes.queueArn} />
 					)}
 				</>
+			)}
+
+			{/* Edit attributes dialog */}
+			{attributes && (
+				<QueueEditAttributesDialog
+					open={editDialogOpen}
+					onOpenChange={setEditDialogOpen}
+					queueName={queueName}
+					currentAttributes={{
+						delaySeconds: attributes.delaySeconds,
+						maximumMessageSize: attributes.maximumMessageSize,
+						messageRetentionPeriod: attributes.messageRetentionPeriod,
+						receiveMessageWaitTimeSeconds:
+							attributes.receiveMessageWaitTimeSeconds,
+						visibilityTimeout: attributes.visibilityTimeout,
+					}}
+				/>
 			)}
 
 			{/* Purge confirmation dialog */}

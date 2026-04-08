@@ -89,6 +89,37 @@ export function useObjectProperties(bucketName: string, key: string) {
 	});
 }
 
+export function useCreateFolder(bucketName: string) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (name: string) =>
+			apiClient.post<{ key: string; bucket: string }>(
+				`/s3/${bucketName}/objects/folder`,
+				{ name },
+			),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["s3", "objects", bucketName],
+			});
+		},
+	});
+}
+
+export function useDeleteFolder(bucketName: string) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (prefix: string) =>
+			apiClient.delete<{ success: boolean }>(
+				`/s3/${bucketName}/objects/folder?key=${encodeURIComponent(prefix)}`,
+			),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["s3", "objects", bucketName],
+			});
+		},
+	});
+}
+
 export function useUploadObject(bucketName: string) {
 	const queryClient = useQueryClient();
 	return useMutation({

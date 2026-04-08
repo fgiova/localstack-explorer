@@ -2,6 +2,7 @@ import {
 	CreateBucketCommand,
 	DeleteBucketCommand,
 	DeleteObjectCommand,
+	DeleteObjectsCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
 	ListBucketsCommand,
@@ -137,6 +138,53 @@ export class S3Service {
 			}
 			throw error;
 		}
+	}
+
+	async createFolder(bucket: string, folderName: string) {
+		const key = folderName.endsWith("/") ? folderName : `${folderName}/`;
+		await this.client.send(
+			new PutObjectCommand({
+				Bucket: bucket,
+				Key: key,
+				Body: "",
+				ContentType: "application/x-directory",
+			}),
+		);
+		return { key, bucket };
+	}
+
+	async deleteFolder(bucket: string, prefix: string) {
+		const folderPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
+		let continuationToken: string | undefined;
+
+		do {
+			const listResponse = await this.client.send(
+				new ListObjectsV2Command({
+					Bucket: bucket,
+					Prefix: folderPrefix,
+					ContinuationToken: continuationToken,
+				}),
+			);
+
+			const objects = listResponse.Contents ?? [];
+			if (objects.length > 0) {
+				await this.client.send(
+					new DeleteObjectsCommand({
+						Bucket: bucket,
+						Delete: {
+							Objects: objects.map((obj) => ({ Key: obj.Key })),
+							Quiet: true,
+						},
+					}),
+				);
+			}
+
+			continuationToken = listResponse.IsTruncated
+				? listResponse.NextContinuationToken
+				: undefined;
+		} while (continuationToken);
+
+		return { success: true };
 	}
 
 	async uploadObject(

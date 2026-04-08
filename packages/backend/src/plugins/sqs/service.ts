@@ -9,6 +9,7 @@ import {
 	PurgeQueueCommand,
 	ReceiveMessageCommand,
 	SendMessageCommand,
+	SetQueueAttributesCommand,
 	type SQSClient,
 } from "@aws-sdk/client-sqs";
 import { AppError } from "../../shared/errors.js";
@@ -159,6 +160,41 @@ export class SQSService {
 			}
 			throw error;
 		}
+	}
+
+	async updateQueueAttributes(
+		queueName: string,
+		attributes: {
+			delaySeconds?: number;
+			maximumMessageSize?: number;
+			messageRetentionPeriod?: number;
+			receiveMessageWaitTimeSeconds?: number;
+			visibilityTimeout?: number;
+		},
+	) {
+		const queueUrl = await this.getQueueUrl(queueName);
+		const attrs: Record<string, string> = {};
+		if (attributes.delaySeconds !== undefined)
+			attrs.DelaySeconds = String(attributes.delaySeconds);
+		if (attributes.maximumMessageSize !== undefined)
+			attrs.MaximumMessageSize = String(attributes.maximumMessageSize);
+		if (attributes.messageRetentionPeriod !== undefined)
+			attrs.MessageRetentionPeriod = String(attributes.messageRetentionPeriod);
+		if (attributes.receiveMessageWaitTimeSeconds !== undefined)
+			attrs.ReceiveMessageWaitTimeSeconds = String(
+				attributes.receiveMessageWaitTimeSeconds,
+			);
+		if (attributes.visibilityTimeout !== undefined)
+			attrs.VisibilityTimeout = String(attributes.visibilityTimeout);
+
+		await this.client.send(
+			new SetQueueAttributesCommand({
+				QueueUrl: queueUrl,
+				Attributes: attrs,
+			}),
+		);
+
+		return { success: true };
 	}
 
 	async sendMessage(
