@@ -2,7 +2,7 @@ import { useConfigStore } from "@/stores/config";
 
 const BASE_URL = "/api";
 
-function getConfigHeaders(): Record<string, string> {
+export function getConfigHeaders(): Record<string, string> {
 	const { endpoint, region } = useConfigStore.getState();
 	return {
 		"x-localstack-endpoint": endpoint,
