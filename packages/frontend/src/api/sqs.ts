@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getConfigHeaders } from "@/lib/api-client";
 
 // --- Interfaces ---
 
@@ -233,7 +233,10 @@ export async function receiveMessagesPoll(
 	const url = new URL(`/api/sqs/${queueName}/messages`, window.location.origin);
 	url.searchParams.set("maxMessages", String(maxMessages));
 	url.searchParams.set("waitTimeSeconds", String(waitTimeSeconds));
-	const response = await fetch(url.toString(), { signal });
+	const response = await fetch(url.toString(), {
+		signal,
+		headers: { ...getConfigHeaders() },
+	});
 	if (!response.ok) {
 		const body = await response
 			.json()
